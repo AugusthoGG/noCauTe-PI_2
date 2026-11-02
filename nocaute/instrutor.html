@@ -12,21 +12,54 @@
     <!-- Menu Lateral -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h2 class="logo">noCauTe</h2>
-            <p>Painel do Instrutor<br>CT Fabiano Mineiro</p>
+             <img src="img/logo-nocaute.png" alt="" class="logo">
         </div>
         <nav class="sidebar-nav">
-            <button class="nav-item active" data-target="view-dashboard">Dashboard</button>
-            <button class="nav-item" data-target="view-alunos">Alunos</button>
-            <button class="nav-item" data-target="view-aulas">Aulas de hoje</button>
-            <button class="nav-item" data-target="view-turmas">Turmas</button>
-            <button class="nav-item" data-target="view-presencas">Presenças</button>
-            <button class="nav-item" data-target="view-relatorios">Relatórios</button>
+            <button class="nav-item active" data-target="view-dashboard">
+                <img src="img/svg/icon-inicio.png" alt="" class="icon-sidebar">
+                Início
+            </button>
+            <button class="nav-item" data-target="view-alunos">
+                <img src="img/svg/icon-alunos.png" alt="" class="icon-sidebar">
+                Alunos
+            </button>
+            <button class="nav-item" data-target="view-aulas">
+                <img src="img/svg/icon-aulas.png" alt="" class="icon-sidebar">
+                Aulas de hoje
+            </button>
+            <button class="nav-item" data-target="view-turmas">
+                <img src="img/svg/icon-turmas.png" alt="" class="icon-sidebar">
+                Turmas
+            </button>
+            <button class="nav-item" data-target="view-presencas">
+                <img src="img/svg/icon-presenca.png" alt="" class="icon-sidebar">
+                Presenças
+            </button>
+            <button class="nav-item" data-target="view-relatorios">
+                <img src="img/svg/icon-relatorio.png" alt="" class="icon-sidebar">
+                Relatórios
+            </button>
         </nav>
         <div class="sidebar-footer">
-            <a href="login.html" class="nav-item btn-logout">Sair</a>
+            <a href="login.html" class="nav-item btn-logout">
+                <img src="img/svg/icon-sair.png" alt="" class="icon-sidebar">
+                Sair
+            </a>
         </div>
     </aside>
+
+    <!--Cabeçalho -->
+    <div class="cabecalho">
+        <div class="info-cabecalho">
+            <div id="area">
+                <p style="font-weight: 700;">Área do Instrutor</p>
+                <p class="name-academia">CT Fabiano Mineiro</p>
+            </div>
+            <div id="perfil">
+                <p>Visitante</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Conteúdo Principal -->
     <main class="dashboard-main">
@@ -34,7 +67,8 @@
         <!-- VISÃO: DASHBOARD -->
         <section id="view-dashboard" class="view-section active">
             <header class="view-header">
-                <h1>Olá, <br><span>Fabiano Mineiro</span></h1>
+                <p>Bem-vindo(a), </p>
+                <h3>Fabiano Mineiro</h3>
             </header>
             
             <div class="stats-grid">
@@ -51,17 +85,17 @@
                 <div class="stat-card">
                     <p class="stat-title">CHAMADAS PENDENTES</p>
                     <h3 style="color: #f87171;">1</h3>
-                    <p class="stat-subtitle">Boxe Manhã</p>
+                    <p class="stat-subtitle">Boxe - Manhã</p>
                 </div>
             </div>
 
             <div class="dashboard-panels">
                 <div class="panel">
-                    <h3>Sua agenda de hoje</h3>
+                    <h3>Agenda Diária</h3>
                     <ul class="grade-list">
-                        <li class="grade-item"><strong>07:00</strong> Boxe Manhã (16 alunos) <button class="btn btn-outline btn-go-chamada" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; float: right;">Fazer Chamada</button></li>
-                        <li class="grade-item"><strong>18:00</strong> Kickboxing Avançado (14 alunos)</li>
-                        <li class="grade-item"><strong>19:30</strong> Muay Thai Iniciante (12 alunos)</li>
+                        <li class="grade-item"><strong>07:00</strong> Boxe <button class="btn btn-outline btn-go-chamada">Fazer Chamada</button></li>
+                        <li class="grade-item"><strong>18:00</strong> Kickboxing Avançado <button class="btn btn-outline btn-go-chamada">Fazer Chamada</button></li>
+                        <li class="grade-item"><strong>19:30</strong> Muay Thai Iniciante <button class="btn btn-outline btn-go-chamada">Fazer Chamada</button></li>
                     </ul>
                 </div>
                 <div class="panel">
