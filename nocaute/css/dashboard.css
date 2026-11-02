@@ -69,17 +69,20 @@
 }
 
 /*Informações do Cabeçalho*/
-.cabecalho{
+.cabecalho {
     background-color: #5B5856;
     display: block;
-    padding: 10px 0px 10px 3vw;
-    margin-left: 13vw;
+    padding: 10px 20px;
+    margin-left: 220px;
+    box-sizing: border-box;
+    min-height: 65px;
 }
 
-.info-cabecalho{
+.info-cabecalho {
     display: flex;
-    gap: 70.5vw;
+    justify-content: space-between;
     align-items: center;
+    gap: 20px;
 }
 
 .perfil{
@@ -87,9 +90,15 @@
     gap: 10px;
 }
 
+#area p,
+#perfil p {
+    margin: 0;
+    color: #FFFFFF;
+}
 
 .name-academia{
     font-size: 10px;
+    margin-top: 4px !important;
 }
 
 
