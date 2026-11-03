@@ -1257,6 +1257,10 @@ hr {
     box-shadow: 0 14px 28px rgba(250, 204, 21, 0.34);
 }
 
+.hidden {
+    display: none;
+}
+
 .help-text {
     font-size: 0.8rem;
     color: #888;
