@@ -15,7 +15,7 @@
 
     --border-color: #333333;
 
-    --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Archivo', sans-serif;
 
 }
 
@@ -1135,7 +1135,7 @@ hr {
 }
 
 .login-container {
-    background: rgba(255, 255, 255, 0.96);
+    background-color: #FFFFFF;
     color: var(--bg-darker);
     padding: 3rem 2.2rem;
     border-radius: 18px;
@@ -1171,11 +1171,10 @@ hr {
 .login-header h2::before {
     content: "";
     display: inline-block;
-    width: 23px;
-    height: 23px;
+    width: 35px;
+    height: 35px;
     background: url('../img/icone-nocaute.png') center/cover no-repeat;
-    border-radius: 50%;
-    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.18);
+
 }
 
 .login-header p {
@@ -1281,7 +1280,17 @@ hr {
     transform: translateX(-2px);
 }
 
-
+.link-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0;
+    font-weight: 600;
+}
 
 /* Responsivo */
 

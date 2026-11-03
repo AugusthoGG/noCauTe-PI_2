@@ -5,6 +5,11 @@
     margin: 0;
 }
 
+.sidebar,
+.nav-item {
+    font-family: 'Archivo', sans-serif;
+}
+
 .sidebar {
     width: 220px;
     background-color: #393736;
@@ -16,9 +21,8 @@
 }
 
 .sidebar-header {
-    padding: 20px 0 4px 0;
+    padding: 20px 0 8px 0;
     border-bottom: 2px solid var(--border-color);
-    box-shadow: 10px 0 100px #000;
     background-color: #393735;
 }
 
@@ -78,11 +82,6 @@
     border-top: 1px solid var(--border-color);
 }
 
-
-.btn-logout img{
-    margin-top: 3px;
-
-}
 
 /*Informações do Cabeçalho*/
 .cabecalho {
@@ -213,7 +212,7 @@
     padding: 2rem;
     border-radius: 8px;
     border: 1px solid #E2E3E3;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 
 .panel h3 {
@@ -230,7 +229,7 @@
 }
 
 .grade-day {
-    color: var(--primary-color);
+    color: var(--bg-darker);
     font-weight: bold;
     margin: 1.5rem 0 0.5rem 0;
     font-size: 0.9rem;
@@ -240,11 +239,13 @@
     padding: 0.8rem 0;
     border-bottom: 1px solid var(--text-muted);
     font-size: 0.9rem;
-    color: var(--bg-darker)
+    color: var(--bg-darker);
 }
 
 .grade-item strong {
     margin-right: 0.5rem;
+    color: var(--primary-color);
+    font-weight: 800;
 }
 
 /*ABA AULAS & HORÁRIOS: Agendamento / Horários */
@@ -408,7 +409,6 @@
 .data-table th,
 .data-table td {
     padding: 1rem;
-    text-align: left;
     border-bottom: 1px solid var(--border-color);
     text-align: center;
 }
@@ -513,7 +513,252 @@
     float: right;
 }
 
+/*ABA MINHAS TURMAS*/
+/* Container principal - Grid com 3 colunas (ajustável) */
+.plans-grid-aulas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
 
+/* Estilo do Card */
+.plan-card-aulas {
+    background-color: #ffffff;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    transition: box-shadow 0.2s ease;
+}
+
+.plan-card-aulas:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Título da Aula (h3) */
+.plan-card-aulas h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111111;
+    margin: 0 0 16px 0;
+}
+
+/* Parágrafo de horário */
+.plan-card-aulas p {
+    font-size: 0.9rem;
+    color: #555555;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+}
+
+/* Lista de informações (Vagas e Local) */
+.plan-card-aulas ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.plan-card-aulas ul li {
+    font-size: 0.9rem;
+    color: #555555;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+/* Cabeçalho do Card (Categoria e Tag) */
+.card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.category-name {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #f5b942; /* Amarelo/Laranja da imagem */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.level-tag {
+    background-color: #f0f2f5;
+    color: #555;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+/* Lista de informações atualizada */
+.info-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-list li {
+    font-size: 0.85rem;
+    color: #555555;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Espaço entre o ícone e o texto */
+}
+
+/* Espaço reservado para o SVG */
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+}
+
+
+/* Container dos botões */
+.class-filters {
+    display: flex;
+    gap: 12px;
+    padding: 16px 0;
+
+}
+
+/*ABA PRESENÇAS*/
+/* Estilo padrão dos botões (inativos) */
+.filter-btn {
+    background-color: transparent;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    color: #555555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Efeito hover nos botões inativos */
+.filter-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #c0c0c0;
+}
+
+/* Estilo do botão ativo (selecionado) */
+.filter-btn.active {
+    background-color: #ffc933; /* Amarelo da imagem */
+    border: 1px solid #ffc933;
+    color: #111111;
+    font-weight: 600;
+}
+
+/*ABA RELATÓRIOS*/
+/* Container principal (Grid para alinhar os 3 cards lado a lado) */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    width: 100%;
+    /* Caso ainda não tenha definido a fonte globalmente, garanta que a Archivo seja usada */
+    font-family: 'Archivo', sans-serif; 
+}
+
+/* Estilo individual de cada painel */
+.stat-box {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* Título superior (ex: PRESENÇA MÉDIA) */
+.stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 12px 0;
+}
+
+/* Número principal em destaque */
+.stat-number {
+    font-size: 2.25rem;
+    font-weight: 800; /* Peso extra bold, característico da fonte Archivo na imagem */
+    color: #111827;
+    margin: 0 0 8px 0;
+    line-height: 1;
+}
+
+/* Descrição inferior (ex: últimos 30 dias) */
+.stat-desc {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Container adaptável à largura da tela */
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+    margin: 0 auto;
+    font-family: 'Archivo', sans-serif;
+}
+
+/* Card base */
+.chart-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    min-width: 0; /* Impede o canvas do Chart.js de estourar a coluna */
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+/* Terceiro card centralizado na linha de baixo */
+.chart-card:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: 100%;
+    max-width: 600px;
+}
+
+/* Título do gráfico */
+.chart-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 20px 0;
+}
+
+/* Área interna do gráfico */
+.chart-wrapper {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Ajuste automático para telas menores (celulares) */
+@media (max-width: 768px) {
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-card:nth-child(3) {
+        grid-column: auto;
+        max-width: 100%;
+    }
+}
 
 /* Responsivo */
 @media (max-width: 900px) {
@@ -585,7 +830,21 @@
 /* Estilos Adicionais (Dashboard.css) */
 .btn-group {
     display: flex;
-    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+    gap: 8px; /* Adiciona um espaço uniforme entre os botões */
+}
+
+.btn-chamada {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px; /* Espaço entre o ícone (✔/X) e o texto */
+    width: 100px;
+    height: 30px;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 4px; /* Opcional: arredonda os cantos levemente */
 }
 
 .btn-chamada[data-status="presente"].active {

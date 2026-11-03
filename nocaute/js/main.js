@@ -190,41 +190,96 @@ function switchTab(type) {
 
 
 /* ==========================================
-   FORMULÁRIO DE LOGIN
+   FORMULÁRIO DE LOGIN E CADASTRO
    ========================================== */
 
-document.addEventListener("DOMContentLoaded", () => {
-    const loginForm = document.querySelector("#loginForm");
+document.addEventListener('DOMContentLoaded', () => {
+    // Elementos de perfil
+    const profileButtons = document.querySelectorAll('.profile-tabs .tab-btn');
 
-    if (!loginForm) return;
+    // Botões de navegação dos formulários
+    const btnGoToRegister = document.getElementById('btnGoToRegister');
+    const btnGoToLogin = document.getElementById('btnGoToLogin');
 
-    loginForm.addEventListener("submit", (event) => {
-        event.preventDefault();
+    // Formulários e campos
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const emailInput = document.getElementById('email');
+    const btnSubmitLogin = document.getElementById('btnSubmitLogin');
+    const btnSubmitRegister = document.getElementById('btnSubmitRegister');
 
-        const emailInput = document.querySelector("#email");
-        const passwordInput = document.querySelector("#senha");
+    // Variável que guarda o perfil selecionado
+    let currentProfile = 'aluno';
 
-        if (!emailInput || !passwordInput) return;
+    // 1. Alternar entre Aluno e Instrutor
+    profileButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            profileButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
 
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-
-        if (!email || !password) {
-            alert("Preencha o e-mail e a senha.");
-            return;
-        }
-
-        const submitButton = loginForm.querySelector(
-            'button[type="submit"]'
-        );
-
-        const type = submitButton?.dataset.type || "aluno";
-
-        // Demonstração: não valida credenciais no servidor.
-        if (type === "instrutor") {
-            window.location.href = "instrutor.html";
-        } else {
-            window.location.href = "aluno.html";
-        }
+            currentProfile = button.getAttribute('data-type');
+            
+            if (currentProfile === 'aluno') {
+                if (emailInput) emailInput.placeholder = 'aluno@nocaute.com';
+                if (btnSubmitLogin) btnSubmitLogin.textContent = 'Entrar como aluno';
+                if (btnSubmitRegister) btnSubmitRegister.textContent = 'Criar conta como aluno';
+            } else {
+                if (emailInput) emailInput.placeholder = 'instrutor@nocaute.com';
+                if (btnSubmitLogin) btnSubmitLogin.textContent = 'Entrar como instrutor';
+                if (btnSubmitRegister) btnSubmitRegister.textContent = 'Criar conta como instrutor';
+            }
+        });
     });
+
+    // 2. Submissão do Formulário de Login (Redirecionamento)
+    if (loginForm) {
+        loginForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            const passwordInput = document.querySelector("#senha");
+            const email = emailInput?.value.trim();
+            const password = passwordInput?.value;
+
+            if (!email || !password) {
+                alert("Preencha o e-mail e a senha.");
+                return;
+            }
+
+            // Redireciona de acordo com o perfil atualmente ativo (currentProfile)
+            if (currentProfile === "instrutor") {
+                window.location.href = "instrutor.html";
+            } else {
+                window.location.href = "aluno.html";
+            }
+        });
+    }
+
+    // 3. Submissão do Formulário de Cadastro (Redirecionamento)
+    if (registerForm) {
+        registerForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            if (currentProfile === "instrutor") {
+                window.location.href = "instrutor.html";
+            } else {
+                window.location.href = "aluno.html";
+            }
+        });
+    }
+
+    // 4. Alternar para formulário de Cadastro
+    if (btnGoToRegister) {
+        btnGoToRegister.addEventListener('click', () => {
+            if (loginForm) loginForm.style.display = 'none';
+            if (registerForm) registerForm.style.display = 'block';
+        });
+    }
+
+    // 5. Alternar de volta para formulário de Login
+    if (btnGoToLogin) {
+        btnGoToLogin.addEventListener('click', () => {
+            if (registerForm) registerForm.style.display = 'none';
+            if (loginForm) loginForm.style.display = 'block';
+        });
+    }
 });

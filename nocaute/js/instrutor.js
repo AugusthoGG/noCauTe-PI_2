@@ -65,3 +65,118 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+/*ABA RELATÓRIOS*/
+// Configurações comuns para as fontes e cores das grades
+Chart.defaults.font.family = "'Archivo', sans-serif";
+Chart.defaults.color = '#6b7280'; // Cor dos textos dos eixos
+
+const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { display: false } // Esconde a legenda padrão na maioria
+    },
+    scales: {
+        x: {
+            grid: { display: false }, // Sem linhas verticais
+            border: { display: false }
+        },
+        y: {
+            border: { display: false },
+            grid: {
+                color: '#f3f4f6', // Cor das linhas horizontais (claras)
+                drawTicks: false,
+            },
+            ticks: {
+                padding: 10
+            }
+        }
+    }
+};
+
+// 1. Ocupação por turma (%)
+const ctxOcupacao = document.getElementById('chartOcupacao').getContext('2d');
+new Chart(ctxOcupacao, {
+    type: 'bar', // Tipo de gráfico (pode mudar para 'line' se preferir)
+    data: {
+        labels: ['Boxe', 'Muay', 'Jiu-Jítsu', 'Funcional', 'Kickboxing'],
+        datasets: [{
+            data: [], // Gráfico vazio
+            backgroundColor: '#ffc933' // Cor de preenchimento futuro
+        }]
+    },
+    options: {
+        ...commonOptions,
+        scales: {
+            ...commonOptions.scales,
+            y: {
+                ...commonOptions.scales.y,
+                min: 0,
+                max: 100,
+                ticks: { stepSize: 25 }
+            }
+        }
+    }
+});
+
+// 2. Presenças por dia da semana
+const ctxPresencas = document.getElementById('chartPresencas').getContext('2d');
+new Chart(ctxPresencas, {
+    type: 'bar',
+    data: {
+        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+        datasets: [{
+            data: [], // Gráfico vazio
+            backgroundColor: '#ffc933'
+        }]
+    },
+    options: {
+        ...commonOptions,
+        scales: {
+            ...commonOptions.scales,
+            y: {
+                ...commonOptions.scales.y,
+                min: 0,
+                max: 60,
+                ticks: { stepSize: 15 }
+            }
+        }
+    }
+});
+
+// 3. Alunos por modalidade
+const ctxModalidade = document.getElementById('chartModalidade').getContext('2d');
+new Chart(ctxModalidade, {
+    type: 'bar',
+    data: {
+        labels: ['Boxe', 'Muay', 'Jiu-Jítsu', 'Funcional', 'Kickboxing'],
+        datasets: [{
+            data: [], // Gráfico vazio
+        }]
+    },
+    options: {
+        ...commonOptions,
+        plugins: {
+            legend: {
+                display: true, // Mostra a legenda neste gráfico
+                position: 'bottom',
+                align: 'start',
+                labels: {
+                    usePointStyle: true, // Bolinhas na legenda
+                    boxWidth: 8
+                }
+            }
+        },
+        scales: {
+            ...commonOptions.scales,
+            y: {
+                ...commonOptions.scales.y,
+                min: 0,
+                max: 100,
+                ticks: { stepSize: 25 }
+            }
+        }
+    }
+});

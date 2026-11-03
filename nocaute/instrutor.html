@@ -1,18 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>noCauTe - Centro de Treinamento</title>
-    <link rel="stylesheet" href="css/style.css"> 
+    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body class="dashboard-body">
 
     <!-- Menu Lateral -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-             <img src="img/logo-nocaute.png" alt="" class="logo">
+            <img src="img/logo-nocaute.png" alt="" class="logo">
         </div>
         <nav class="sidebar-nav">
             <button class="nav-item active" data-target="view-dashboard">
@@ -63,14 +70,14 @@
 
     <!-- Conteúdo Principal -->
     <main class="dashboard-main">
-        
+
         <!-- VISÃO: DASHBOARD -->
         <section id="view-dashboard" class="view-section active">
             <header class="view-header">
                 <p>Bem-vindo(a), </p>
                 <h3>Fabiano Mineiro</h3>
             </header>
-            
+
             <div class="stats-grid">
                 <div class="stat-card">
                     <p class="stat-title">AULAS HOJE</p>
@@ -93,17 +100,21 @@
                 <div class="panel">
                     <h3>Agenda Diária</h3>
                     <ul class="grade-list">
-                        <li class="grade-item"><strong>07:00</strong> Boxe <button class="btn btn-outline btn-go-chamada">Fazer Chamada</button></li>
-                        <li class="grade-item"><strong>18:00</strong> Kickboxing Avançado <button class="btn btn-outline btn-go-chamada">Fazer Chamada</button></li>
-                        <li class="grade-item"><strong>19:30</strong> Muay Thai Iniciante <button class="btn btn-outline btn-go-chamada">Fazer Chamada</button></li>
+                        <li class="grade-item"><strong>07:00</strong> Boxe <button
+                                class="btn btn-outline btn-go-chamada">Fazer Chamada</button></li>
+                        <li class="grade-item"><strong>18:00</strong> Kickboxing Avançado <button
+                                class="btn btn-outline btn-go-chamada">Fazer Chamada</button></li>
+                        <li class="grade-item"><strong>19:30</strong> Muay Thai Iniciante <button
+                                class="btn btn-outline btn-go-chamada">Fazer Chamada</button></li>
                     </ul>
                 </div>
-                <div class="panel">
-                    <h3>Avisos Rápidos</h3>
-                    <div class="empty-state">
-                        <p>Nenhum aviso da administração para hoje.</p>
+                <div class="chart-card">
+                    <h3 class="chart-title">Presenças por dia da semana</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chartPresencas"></canvas>
                     </div>
                 </div>
+            </div>
             </div>
         </section>
 
@@ -113,16 +124,32 @@
                 <h1>Gerenciamento de Alunos</h1>
                 <p>Lista geral de alunos matriculados.</p>
             </header>
-            
+
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
-                        <tr><th>NOME</th><th>PLANO</th><th>STATUS</th><th>AÇÕES</th></tr>
+                        <tr>
+                            <th>NOME</th>
+                            <th>PLANO</th>
+                            <th>STATUS</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        <tr><td>Ana Beatriz Lima</td><td>Competidor</td><td class="status-presente">Ativo</td><td><button class="btn btn-outline" style="padding: 0.3rem;">Ver Perfil</button></td></tr>
-                        <tr><td>Carlos Eduardo Souza</td><td>Iniciante</td><td class="status-presente">Ativo</td><td><button class="btn btn-outline" style="padding: 0.3rem;">Ver Perfil</button></td></tr>
-                        <tr><td>Mariana Costa</td><td>Personal</td><td class="status-falta">Inativo</td><td><button class="btn btn-outline" style="padding: 0.3rem;">Ver Perfil</button></td></tr>
+                        <tr>
+                            <td>Ana Beatriz Lima</td>
+                            <td>Competidor</td>
+                            <td class="status-presente">Ativo</td>
+                        </tr>
+                        <tr>
+                            <td>Carlos Eduardo Souza</td>
+                            <td>Iniciante</td>
+                            <td class="status-presente">Ativo</td>
+                        </tr>
+                        <tr>
+                            <td>Mariana Costa</td>
+                            <td>Personal</td>
+                            <td class="status-falta">Inativo</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -139,19 +166,22 @@
                 <div class="class-card">
                     <div class="class-time">07:00<span>60 min</span></div>
                     <div class="class-info">
-                        <h4>Boxe Manhã</h4>
-                        <p class="class-details">📍 Ringue | 16/20 vagas preenchidas</p>
+                        <h4>Boxe</h4>
+                        <p class="class-details"><img src="img/svg/icon-localizacao.png" alt=""> Ringue | 8/8 vagas
+                            preenchidas</p>
                     </div>
                     <button class="btn btn-primary btn-go-chamada">Realizar Chamada</button>
                 </div>
                 <div class="class-card">
-                    <div class="class-time">18:00<span>90 min</span></div>
+                    <div class="class-time">18:00<span>60 min</span></div>
                     <div class="class-info">
-                        <h4>Kickboxing Avançado</h4>
-                        <p class="class-details">📍 Ringue | 14/15 vagas preenchidas</p>
+                        <h4>Jiu-Jitsu</h4>
+                        <p class="class-details"><img src="img/svg/icon-localizacao.png" alt=""> Ringue | 14/15 vagas
+                            preenchidas</p>
                     </div>
                     <button class="btn btn-outline">Ver Lista</button>
                 </div>
+
             </div>
         </section>
 
@@ -161,16 +191,121 @@
                 <h1>Minhas Turmas</h1>
                 <p>Gestão de turmas fixas.</p>
             </header>
-            <div class="plans-grid">
-                <div class="plan-card">
-                    <h3>Boxe Manhã</h3>
-                    <p>Seg, Qua, Sex - 07:00</p>
-                    <ul><li>20 Vagas totais</li><li>Ringue principal</li></ul>
+            <div class="plans-grid-aulas">
+                <!-- Card 1-->
+                <div class="plan-card-aulas">
+                    <div class="card-top">
+                        <span class="category-name">BOXE</span>
+                        <span class="level-tag">Todos os níveis</span>
+                    </div>
+                    <h3>Boxe</h3>
+                    <ul class="info-list">
+                        <li>
+                            <span><img src="img/svg/icon-relogio.png" alt="" class="icon"></span>
+                            Seg · Qua · Sex - 07:00 (60 min)
+                        </li>
+                        <li>
+                            <span><img src="img/svg/icon-localizacao.png" alt="" class="icon"></span>
+                            Ringue · 20 vagas totais
+                        </li>
+                    </ul>
                 </div>
-                <div class="plan-card">
+
+                <!-- Card 2-->
+                <div class="plan-card-aulas">
+                    <div class="card-top">
+                        <span class="category-name">KICKBOXING</span>
+                        <span class="level-tag">Iniciante</span>
+                    </div>
+                    <h3>Kickboxing - Iniciante</h3>
+                    <ul class="info-list">
+                        <li>
+                            <span><img src="img/svg/icon-relogio.png" alt="" class="icon"></span>
+                            Ter · Qui - 09:00 (90 min)
+                        </li>
+                        <li>
+                            <span><img src="img/svg/icon-localizacao.png" alt="" class="icon"></span>
+                            Ringue · 15 vagas totais
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Card 3-->
+                <div class="plan-card-aulas">
+                    <div class="card-top">
+                        <span class="category-name">KICKBOXING</span>
+                        <span class="level-tag">Avançado</span>
+                    </div>
                     <h3>Kickboxing Avançado</h3>
-                    <p>Ter, Qui - 18:00</p>
-                    <ul><li>15 Vagas totais</li><li>Ringue principal</li></ul>
+                    <ul class="info-list">
+                        <li>
+                            <span><img src="img/svg/icon-relogio.png" alt="" class="icon"></span>
+                            Ter · Qui - 18:00 (90 min)
+                        </li>
+                        <li>
+                            <span><img src="img/svg/icon-localizacao.png" alt="" class="icon"></span>
+                            Ringue · 15 vagas totais
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Card 4-->
+                <div class="plan-card-aulas">
+                    <div class="card-top">
+                        <span class="category-name">MUAY THAI</span>
+                        <span class="level-tag">Iniciante</span>
+                    </div>
+                    <h3>Muay Thai - Iniciante</h3>
+                    <ul class="info-list">
+                        <li>
+                            <span><img src="img/svg/icon-relogio.png" alt="" class="icon"></span>
+                            Ter · Qui - 16:00 (90 min)
+                        </li>
+                        <li>
+                            <span><img src="img/svg/icon-localizacao.png" alt="" class="icon"></span>
+                            Ringue · 10 vagas totais
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Card 5-->
+                <div class="plan-card-aulas">
+                    <div class="card-top">
+                        <span class="category-name">MUAY THAI</span>
+                        <span class="level-tag">Avançado</span>
+                    </div>
+                    <h3>Muay Thai - Avançado</h3>
+                    <ul class="info-list">
+                        <li>
+                            <span><img src="img/svg/icon-relogio.png" alt="" class="icon"></span>
+                            Ter · Qui - 19:30 (90 min)
+                        </li>
+                        <li>
+                            <span><img src="img/svg/icon-localizacao.png" alt="" class="icon"></span>
+                            Ringue · 10 vagas totais
+                        </li>
+                    </ul>
+                </div>
+
+
+
+                <!-- Card 6-->
+                <div class="plan-card-aulas">
+                    <div class="card-top">
+                        <span class="category-name">Jiu-Jitsu</span>
+                        <span class="level-tag">Todos os níveis</span>
+                    </div>
+                    <h3>Jiu-Jitsu</h3>
+                    <ul class="info-list">
+                        <li>
+                            <span><img src="img/svg/icon-relogio.png" alt="" class="icon"></span>
+                            Seg · Qua · Sex - 18:00 (60 min)
+                        </li>
+                        <li>
+                            <span><img src="img/svg/icon-localizacao.png" alt="" class="icon"></span>
+                            Ringue · 15 vagas totais
+                        </li>
+                    </ul>
                 </div>
             </div>
         </section>
@@ -179,20 +314,28 @@
         <section id="view-presencas" class="view-section">
             <header class="view-header">
                 <h1>Chamada</h1>
-                <p>Quarta-feira, 09 de setembro - <strong>Boxe Manhã (07:00)</strong></p>
+                <p>Quarta-feira, 09 de setembro</p>
+                <div class="class-filters">
+                    <button class="filter-btn active">07:00 &middot; Boxe</button>
+                    <button class="filter-btn">18:00 &middot; Jiu-Jitsu</button>
+                </div>
             </header>
 
             <div class="table-responsive">
                 <table class="data-table" id="tabela-chamada">
                     <thead>
-                        <tr><th>ALUNO</th><th>STATUS DE PRESENÇA</th></tr>
+                        <tr>
+                            <th>ALUNO</th>
+                            <th>STATUS DE PRESENÇA</th>
+                        </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>Ana Beatriz Lima</td>
                             <td>
                                 <div class="btn-group">
-                                    <button class="btn btn-outline btn-chamada" data-status="presente">✔ Presente</button>
+                                    <button class="btn btn-outline btn-chamada" data-status="presente">✔
+                                        Presente</button>
                                     <button class="btn btn-outline btn-chamada" data-status="falta">X Falta</button>
                                 </div>
                             </td>
@@ -201,7 +344,8 @@
                             <td>Carlos Eduardo Souza</td>
                             <td>
                                 <div class="btn-group">
-                                    <button class="btn btn-outline btn-chamada" data-status="presente">✔ Presente</button>
+                                    <button class="btn btn-outline btn-chamada" data-status="presente">✔
+                                        Presente</button>
                                     <button class="btn btn-outline btn-chamada" data-status="falta">X Falta</button>
                                 </div>
                             </td>
@@ -219,11 +363,49 @@
                 <h1>Relatórios</h1>
                 <p>Visão geral de desempenho.</p>
             </header>
-            <div class="dashboard-panels">
-                <div class="panel">
-                    <h3>Taxa de Presença (Mês)</h3>
-                    <h2 style="font-size: 3rem; color: var(--primary-color);">87%</h2>
-                    <p>Média de presença nas suas turmas.</p>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h3 class="stat-label">PRESENÇA MÉDIA</h3>
+                    <h2 class="stat-number">87%</h2>
+                    <p class="stat-desc">últimos 30 dias</p>
+                </div>
+
+                <div class="stat-box">
+                    <h3 class="stat-label">OCUPAÇÃO MÉDIA</h3>
+                    <h2 class="stat-number">72%</h2>
+                    <p class="stat-desc">das turmas</p>
+                </div>
+
+                <div class="stat-box">
+                    <h3 class="stat-label">NOVOS ALUNOS</h3>
+                    <h2 class="stat-number">18</h2>
+                    <p class="stat-desc">no mês</p>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <!-- Gráfico 1: Ocupação por turma -->
+                <div class="chart-card">
+                    <h3 class="chart-title">Ocupação por turma (%)</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chartOcupacao"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico 2: Presenças por dia da semana -->
+                <div class="chart-card">
+                    <h3 class="chart-title">Presenças por dia da semana</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chartPresencas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico 3: Alunos por modalidade -->
+                <div class="chart-card">
+                    <h3 class="chart-title">Alunos por modalidade</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chartModalidade"></canvas>
+                    </div>
                 </div>
             </div>
         </section>
@@ -232,4 +414,5 @@
 
     <script src="js/instrutor.js"></script>
 </body>
+
 </html>
