@@ -350,6 +350,15 @@ span {
     left: 1.5rem;
 }
 
+.header .btn-primary:hover,
+.header .btn-primary:focus-visible,
+.hero-content .btn-primary:hover,
+.hero-content .btn-primary:focus-visible {
+    background-color: #ffffff;
+    color: #000000;
+    opacity: 1;
+}
+
 .hero-next {
     right: 1.5rem;
 }
@@ -657,10 +666,13 @@ span {
 
 
 
-.btn-saiba-mais:hover {
-
-    background-color: #e0a800;
-
+.btn-saiba-mais-modalidades:hover,
+.btn-saiba-mais-modalidades:focus-visible,
+.btn-saiba-mais:hover,
+.btn-saiba-mais:focus-visible {
+    background-color: #ffffff;
+    color: #000000;
+    opacity: 1;
 }
 
 
@@ -678,10 +690,7 @@ span {
     padding: 0px 50px 25px 50px;
 }
 
-
-
 .institucional-grid {
-
     display: grid;
 
     grid-template-columns: repeat(3, 1fr);
@@ -763,21 +772,19 @@ span {
 
 
 .mvv-item {
-
     margin-bottom: 3rem;
-
     display: flex;
-
     gap: 5px;
-
 }
-
-
 
 .mvv-item:last-child {
 
     margin-bottom: 0;
 
+}
+
+.mvv-item:nth-child(5) {
+    flex-direction: row-reverse;
 }
 
 
@@ -828,44 +835,51 @@ span {
 
 /*Modalidades*/
 
+
+
+/*Modalidades*/
+
 .subtitulo {
-
     text-align: justify;
-
     margin-left: 20px;
-
 }
-
-
 
 hr {
-
     width: 8rem;
-
     margin-left: 20px;
-
     height: 5px;
-
-    border-radius: 10px;
-
     border: 0;
-
-    color: var(--primary-color);
-
+    border-radius: 10px;
     background-color: var(--primary-color);
-
-
-
 }
-
-
 
 /* Grade de Horários */
 
 .grade-horarios {
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(45deg, #fafafa, #b4b4b4);
+    color: #272728;
+    padding: 4rem 0;
+    padding-bottom: 17rem;
+}
 
-    background-image: linear-gradient(45deg, #fafafa, #b4b4b4);
+.grade-horarios > .section-header,
+.grade-horarios > .table-responsive {
+    position: relative;
+    z-index: 1;
+}
 
+.grade-horarios > .schedule-background {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 0;
+    display: block;
+    width: min(500px, 100vw);
+    height: auto;
+    opacity: 0.22;
+    pointer-events: none;
 }
 
 
@@ -882,28 +896,81 @@ hr {
 
 .table-responsive {
     overflow-x: auto;
+    width: 90%;
+    margin: 0 auto 2rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 14px 36px rgba(17, 17, 17, 0.1);
 }
 
 .schedule-table {
-    width: 90%;
-    border-collapse: collapse;
+    width: 100%;
+    min-width: 680px;
+    border-collapse: separate;
+    border-spacing: 0;
     background: var(--text-light);
     color: var(--bg-dark);
-    margin: auto;
 }
 
 .schedule-table th,
 .schedule-table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid #e9e9e9;
     font-weight: 500;
     text-align: center;
+    white-space: nowrap;
 }
 
 .schedule-table th {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    background: #1a1a1a;
     color: var(--primary-color);
     font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+}
+
+.schedule-table tbody tr:nth-child(even) {
+    background: #f7f7f7;
+}
+
+.schedule-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.schedule-table tbody tr {
+    transition: background-color 180ms ease;
+}
+
+.schedule-table tbody tr:hover {
+    background: #fff8d9;
+}
+
+.schedule-table td:nth-child(3) {
+    color: #705600;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .grade-horarios {
+        padding: 3rem 0 12.5rem;
+    }
+
+    .grade-horarios > .schedule-background {
+        width: min(360px, 100vw);
+        opacity: 0.14;
+    }
+
+    .table-responsive {
+        margin-bottom: 1.5rem;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        padding: 0.9rem 1rem;
+    }
 }
 
 
@@ -914,12 +981,15 @@ hr {
 
 .section.planos {
     position: relative;
-    /* Mudamos para preto puro (#000000) à direita para casar perfeitamente com o tom escuro da foto */
     background: linear-gradient(to right, #4B4B4B 0%, #1a1a1a 45%, #000000 70%, #000000 100%);
-    padding: 60px 0;
+    padding: 5rem 0 5.5rem;
     isolation: isolate;
     overflow: hidden;
-    /* Evita que a imagem vaze ou crie barras de rolagem */
+}
+
+.section.planos .header-topo .subtitulo,
+.section.planos .header-topo hr {
+    margin-left: 50px;
 }
 
 
@@ -940,8 +1010,6 @@ hr {
 
     height: 100%;
 
-    /* Esse degradê cria uma transição suave, eliminando o corte seco da imagem */
-
     background: linear-gradient(to right, transparent 50%, rgba(0, 0, 0, 0.5) 70%, transparent 95%);
 
     z-index: -1;
@@ -958,15 +1026,11 @@ hr {
     position: absolute;
     right: 0;
     top: 0;
-    /* Alinha pelo topo */
     bottom: 0;
-    /* Alinha pela base simultaneamente */
     height: 100% !important;
-    /* Força a imagem a ocupar 100% da altura total da seção */
     width: auto;
     object-fit: cover;
     z-index: -2;
-    /* Aplica uma opacidade e um filtro de mistura para fundir a foto com o fundo escuro */
     opacity: 0.75;
     mix-blend-mode: luminosity;
 }
@@ -987,9 +1051,11 @@ hr {
 
 .plans-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    margin: 20px;
+    width: min(1180px, calc(100% - 3rem));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    align-items: stretch;
+    gap: 1.25rem;
+    margin: 0 auto;
 }
 
 .plan-card {
@@ -997,53 +1063,112 @@ hr {
     color: var(--bg-darker);
     padding: 2rem;
     border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.72);
     text-align: center;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.2);
+    transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.plan-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 22px 46px rgba(0, 0, 0, 0.28);
 }
 
 .plan-card.highlight {
     background: var(--primary-color);
     position: relative;
-    transform: scale(1.05);
+    border-color: var(--primary-color);
+    transform: translateY(-8px);
+    box-shadow: 0 22px 46px rgba(0, 0, 0, 0.3);
+}
+
+.plan-card.highlight:hover {
+    transform: translateY(-12px);
 }
 
 .plan-card .price {
-    font-size: 2.5rem;
+    font-size: 2.75rem;
     font-weight: bold;
-    margin: 1rem 0;
+    line-height: 1.15;
+    margin: 1.25rem 0;
 }
 
 .plan-card ul {
-    margin-bottom: 2rem;
+    margin: 0 0 2rem;
     flex-grow: 1;
     text-align: left;
-    padding-left: 1.5rem;
-    list-style-type: disc;
+    padding: 0;
+    list-style: none;
+}
+
+.plan-card li {
+    padding: 0.65rem 0;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.plan-card li:last-child {
+    border-bottom: 0;
 }
 
 .plan-card h3 {
-
     font-weight: 800;
-
+    font-size: 1rem;
+    letter-spacing: 0.08em;
 }
 
 .tipo-assinatura {
-
     color: var(--bg-darker);
-
+    font-size: 1rem;
+    font-weight: 600;
 }
 
-.badge {
-
-    font-size: 12px;
-
+.plan-card .badge {
+    align-self: center;
+    margin-top: 0.75rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 3px;
+    background: #111111;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
 }
 
 .btn-assine {
+    width: 100%;
+    margin-top: auto;
+    padding: 0.9rem 1.25rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
 
-    font-size: 18px;
+.plan-card:not(.highlight) .btn-assine:hover,
+.plan-card:not(.highlight) .btn-assine:focus-visible {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #ffffff;
+    opacity: 1;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(17, 17, 17, 0.16);
+}
 
+.plan-card.highlight .btn-assine:hover,
+.plan-card.highlight .btn-assine:focus-visible {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #111111;
+    opacity: 1;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(17, 17, 17, 0.14);
+}
+
+.plan-card li {
+    border-color: rgba(17, 17, 17, 0.12);
 }
 
 
@@ -1096,8 +1221,6 @@ hr {
     display: flex;
 
     justify-content: center;
-
-    margin-left: 25%;
 
 }
 
@@ -1323,4 +1446,266 @@ hr {
         transform: scale(1);
     }
 
+}
+
+.institucional-text .btn-saiba-mais:hover,
+.institucional-text .btn-saiba-mais:focus-visible {
+    background-color: #000000;
+    color: #ffffff;
+    opacity: 1;
+}
+
+.btn-fale-conosco .btn-black:hover,
+.btn-fale-conosco .btn-black:focus-visible {
+    background-color: #ffffff;
+    color: #000000;
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 0.75rem 0;
+    }
+
+    .header-content {
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        padding: 0 1rem;
+    }
+
+    .header .logo {
+        width: 112px;
+        margin-left: 0;
+    }
+
+    .header .btn-primary {
+        margin-right: 0;
+        padding: 0.55rem 1rem;
+    }
+
+    .nav {
+        display: block;
+        order: 3;
+        flex: 0 0 100%;
+        min-width: 0;
+    }
+
+    .nav-list {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.25rem 1rem;
+    }
+
+    .nav-list a {
+        display: block;
+        padding: 0.2rem 0;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .hero,
+    .hero-carousel {
+        min-height: 560px;
+        height: 74vh;
+    }
+
+    .hero-content {
+        top: 50%;
+        left: 3rem;
+        width: calc(100% - 6rem);
+        max-width: none;
+        transform: translateY(-50%);
+    }
+
+    .hero h1 {
+        font-size: 2rem;
+        line-height: 1.05;
+    }
+
+    .hero-eyebrow {
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+    }
+
+    .hero-content > p:not(.hero-eyebrow) {
+        font-size: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .hero-content .btn {
+        min-width: 0;
+        max-width: 100%;
+        padding: 0.8rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .hero-control {
+        width: 36px;
+        height: 36px;
+    }
+
+    #institucional .container {
+        padding: 0 1rem 1.5rem;
+    }
+
+    .institucional-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.5rem;
+    }
+
+    .institucional-text h2 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .institucional-text p {
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .institucional-img img {
+        display: block;
+        width: min(100%, 500px);
+        height: auto;
+        margin: 0 auto;
+        box-shadow: -14px 14px var(--primary-color);
+    }
+
+    .btn-saiba-mais {
+        max-width: 100%;
+        margin-top: 1rem;
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
+        white-space: normal;
+    }
+
+    .mvv-item {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .mvv-item h3 {
+        position: static;
+        flex: 0 0 100%;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .mvv-item p {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 0;
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+
+    .mvv-item svg {
+        flex: 0 0 52px;
+        width: 52px;
+        height: 52px;
+        max-width: 52px;
+    }
+
+    .mvv-item:nth-child(5) {
+        flex-direction: row-reverse;
+    }
+
+    .section-header {
+        margin-bottom: 2rem;
+        padding: 0 1rem;
+    }
+
+    .section-header h2 {
+        font-size: 2.1rem;
+    }
+
+    .section-header p {
+        font-size: 1rem;
+    }
+
+    .bg-dark {
+        padding: 3rem 1rem;
+    }
+
+    .cards-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+    }
+
+    .card-header h3 {
+        font-size: 1.6rem;
+    }
+
+    .card p {
+        margin-bottom: 1.25rem;
+        font-size: 1rem;
+    }
+
+    .sub-titulo-horario {
+        margin-left: 1rem;
+    }
+
+    .grade-horarios .header-topo hr {
+        margin-left: 1rem !important;
+    }
+
+    .table-responsive {
+        width: calc(100% - 2rem);
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .section.planos {
+        padding: 4rem 0;
+    }
+
+    .section.planos .header-topo .subtitulo,
+    .section.planos .header-topo hr {
+        margin-left: 1rem;
+    }
+
+    .plans-grid {
+        width: calc(100% - 2rem);
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+    }
+
+    .plan-card {
+        padding: 1.5rem;
+    }
+
+    .plan-card.highlight,
+    .plan-card.highlight:hover {
+        transform: none;
+    }
+
+    .plan-card .price {
+        font-size: 2.3rem;
+    }
+
+    .cta-content {
+        padding: 0 1rem;
+        gap: 1.25rem;
+    }
+
+    .mini-descricao-cta {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75rem 1rem;
+        margin: 0;
+    }
+
+    .mini-descricao-cta p {
+        font-size: 0.9rem;
+    }
+
+    .footer .container {
+        padding: 0 1rem;
+    }
+
+    .icone {
+        width: 40px;
+    }
 }

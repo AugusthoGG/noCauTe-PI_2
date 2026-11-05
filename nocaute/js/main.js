@@ -211,6 +211,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Variável que guarda o perfil selecionado
     let currentProfile = 'aluno';
 
+    function firstNameFromEmail(email) {
+        const localPart = (email || '').trim().split('@')[0] || '';
+        const name = localPart.split(/[._+-]/)[0].toLocaleLowerCase('pt-BR');
+        return name
+            ? name.charAt(0).toLocaleUpperCase('pt-BR') + name.slice(1)
+            : currentProfile === 'instrutor' ? 'Instrutor' : 'Aluno';
+    }
+
+    function storeUserSession(email) {
+        try {
+            sessionStorage.setItem('nocaute.currentUser', JSON.stringify({
+                email: email.trim(),
+                profile: currentProfile,
+                firstName: firstNameFromEmail(email)
+            }));
+        } catch {
+            // Dashboards retain their role-based fallback if storage is unavailable.
+        }
+    }
+
     // 1. Alternar entre Aluno e Instrutor
     profileButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -245,6 +265,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            storeUserSession(email);
+
             // Redireciona de acordo com o perfil atualmente ativo (currentProfile)
             if (currentProfile === "instrutor") {
                 window.location.href = "instrutor.html";
@@ -258,6 +280,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         registerForm.addEventListener("submit", (event) => {
             event.preventDefault();
+
+            const registerEmail = document.getElementById('reg-email')?.value.trim();
+            if (!registerEmail) return;
+            storeUserSession(registerEmail);
 
             if (currentProfile === "instrutor") {
                 window.location.href = "instrutor.html";
