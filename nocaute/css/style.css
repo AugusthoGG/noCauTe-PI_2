@@ -145,6 +145,10 @@ span {
     padding: 8px 25px;
 }
 
+.btn-entrar{
+    margin-right: 15px;
+}
+
 .btn-outline {
     background-color: transparent;
     border: 1px solid var(--border-color);
