@@ -192,29 +192,43 @@ new Chart(ctxOcupacao, {
 });
 
 // 2. Presenças por dia da semana
-const ctxPresencas = document.getElementById('chartPresencas').getContext('2d');
-new Chart(ctxPresencas, {
-    type: 'bar',
-    data: {
-        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-        datasets: [{
-            data: [], // Gráfico vazio
-            backgroundColor: '#ffc933'
-        }]
-    },
-    options: {
-        ...commonOptions,
-        scales: {
-            ...commonOptions.scales,
-            y: {
-                ...commonOptions.scales.y,
-                min: 0,
-                max: 60,
-                ticks: { stepSize: 15 }
+// 1. Primeiro gráfico
+const elPresencas1 = document.getElementById('chartPresencas1');
+if (elPresencas1) {
+    new Chart(elPresencas1.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+            datasets: [{ data: [], backgroundColor: '#ffc933' }]
+        },
+        options: {
+            ...commonOptions,
+            scales: {
+                ...commonOptions.scales,
+                y: { ...commonOptions.scales.y, min: 0, max: 60, ticks: { stepSize: 15 } }
             }
         }
-    }
-});
+    });
+}
+
+// 2. Segundo gráfico
+const elPresencas2 = document.getElementById('chartPresencas2');
+if (elPresencas2) {
+    new Chart(elPresencas2.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+            datasets: [{ data: [], backgroundColor: '#ffc933' }]
+        },
+        options: {
+            ...commonOptions,
+            scales: {
+                ...commonOptions.scales,
+                y: { ...commonOptions.scales.y, min: 0, max: 60, ticks: { stepSize: 15 } }
+            }
+        }
+    });
+}
 
 // 3. Alunos por modalidade
 const ctxModalidade = document.getElementById('chartModalidade').getContext('2d');
