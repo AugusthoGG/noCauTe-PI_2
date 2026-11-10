@@ -67,7 +67,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Conteúdo Principal -->
     <main class="dashboard-main">
         <!-- VISÃO: INÍCIO -->
@@ -80,8 +80,8 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <p class="stat-title">PLANO</p>
-                    <h3>Competidor</h3>
-                    <p class="stat-subtitle">R$ 189/mês</p>
+                    <h3 id="student-plan-name">—</h3>
+                    <p class="stat-subtitle" id="student-plan-price">Carregando plano...</p>
                 </div>
                 <div class="stat-card">
                     <p class="stat-title">AULAS RESERVADAS</p>
@@ -90,13 +90,13 @@
                 </div>
                 <div class="stat-card">
                     <p class="stat-title">FREQUÊNCIA</p>
-                    <h3>92%</h3>
-                    <p class="stat-subtitle">últimos 30 dias</p>
+                    <h3 id="student-attendance-rate">—</h3>
+                    <p class="stat-subtitle">últimos 14 registros</p>
                 </div>
                 <div class="stat-card">
-                    <p class="stat-title">SEQUÊNCIA</p>
-                    <h3>7 dias</h3>
-                    <p class="stat-subtitle">sem faltar</p>
+                    <p class="stat-title">PRESENÇAS</p>
+                    <h3 id="student-attendance-count">—</h3>
+                    <p class="stat-subtitle">presenças registradas</p>
                 </div>
             </div>
 
@@ -104,23 +104,13 @@
                 <div class="panel">
                     <h3>Minhas próximas aulas</h3>
                     <div id="proximas-aulas-container" class="empty-state">
-                        <p>Você ainda não reservou nenhuma aula.</p>
+                        <p>Carregando suas reservas...</p>
                         <button class="btn btn-outline btn-go-horarios">Ver horários disponíveis</button>
                     </div>
                 </div>
                 <div class="panel">
                     <h3>Grade dos próximos dias</h3>
-                    <ul class="grade-list">
-                        <li class="grade-day">Quarta-Feira, 09 De Setembro</li>
-                        <li class="grade-item"><strong>06:00</strong> Funcional Express - Área externa - Léo Andrade
-                        </li>
-                        <li class="grade-item"><strong>07:00</strong> Boxe Manhã - Ringue - Fabiano Mineiro</li>
-                        <li class="grade-item"><strong>18:00</strong> Kickboxing Avançado - Ringue - Fabiano Mineiro
-                        </li>
-                        <li class="grade-day">Quinta-Feira, 10 De Setembro</li>
-                        <li class="grade-item"><strong>19:30</strong> Muay Thai Noite - Sala 1 - Rafael Torres</li>
-                        <li class="grade-item"><strong>20:30</strong> Jiu-Jitsu Base - Tatame - Camila Duarte</li>
-                    </ul>
+                    <ul class="grade-list" id="upcoming-schedule"></ul>
                 </div>
             </div>
         </section>
@@ -132,82 +122,14 @@
                 <p>Escolha o dia e reserve sua vaga</p>
             </header>
 
-            <div class="date-selector">
-                <button class="date-btn active">
-                    <h5>QUA</h5>
-                    <p>09/09</p>
-                </button>
-                <button class="date-btn">
-                    <h5>QUI</h5>
-                    <p>10/09</p>
-                </button>
-                <button class="date-btn">
-                    <h5>SEX</h5>
-                    <p>11/09</p>
-                </button>
-                <button class="date-btn">
-                    <h5>SÁB</h5>
-                    <p>12/09</p>
-                </button>
-                <button class="date-btn">
-                    <h5>DOM</h5>
-                    <p>13/09</p>
-                </button>
-                <button class="date-btn">
-                    <h5>SEG</h5>
-                    <p>14/09</p>
-                </button>
-                <button class="date-btn">
-                    <h5>TER</h5>
-                    <p>15/09</p>
-                </button>
-            </div>
+            <button id="refresh-student-sessions" class="btn btn-outline" type="button">Atualizar aulas</button>
+            <div class="date-selector" aria-label="Filtrar aulas por dia"></div>
+            <div class="filters" aria-label="Filtrar aulas por modalidade"></div>
 
-            <div class="filters">
-                <button class="filter-btn active">Todos</button>
-                <button class="filter-btn">Boxe</button>
-                <button class="filter-btn">Muay Thai</button>
-                <button class="filter-btn">Jiu-Jitsu</button>
-                <button class="filter-btn">Kickboxing</button>
-                <button class="filter-btn">Funcional</button>
-            </div>
-
-            <h3 class="day-title">Quarta-Feira, 09 De Setembro</h3>
+            <h3 class="day-title">Carregando horários...</h3>
 
             <div class="classes-list">
-                <!-- Aula 1 -->
-                <div class="class-card" data-date="09/09">
-                    <div class="class-time">06:00<span>45 min</span></div>
-                    <div class="class-info">
-                        <h4>Funcional Express</h4>
-                        <p class="class-tags">FUNCIONAL • TODOS OS NÍVEIS</p>
-                        <p class="class-details"><img src="img/svg/icon-pessoa-professor.png" alt="" title="Instrutor responsável"> Léo Andrade | <img src="img/svg/icon-localizacao.png" alt="" title="Local da aula"> Área externa | 17 vagas</p>
-                    </div>
-                    <button class="btn btn-primary btn-reservar" data-id="1" data-name="Funcional Express"
-                        data-time="06:00">Reservar</button>
-                </div>
-                <!-- Aula 2 -->
-                <div class="class-card" data-date="09/09">
-                    <div class="class-time">07:00<span>60 min</span></div>
-                    <div class="class-info">
-                        <h4>Boxe Manhã</h4>
-                        <p class="class-tags">BOXE • TODOS OS NÍVEIS</p>
-                        <p class="class-details"><img src="img/svg/icon-pessoa-professor.png" alt="" title="Instrutor responsável"> Fabiano Mineiro | <img src="img/svg/icon-localizacao.png" alt="" title="Local da aula"> Ringue | 16 vagas</p>
-                    </div>
-                    <button class="btn btn-primary btn-reservar" data-id="2" data-name="Boxe Manhã"
-                        data-time="07:00">Reservar</button>
-                </div>
-                <!-- Aula 3 -->
-                <div class="class-card" data-date="09/09">
-                    <div class="class-time">18:00<span>90 min</span></div>
-                    <div class="class-info">
-                        <h4>Kickboxing Avançado</h4>
-                        <p class="class-tags">KICKBOXING • AVANÇADO</p>
-                        <p class="class-details"><img src="img/svg/icon-pessoa-professor.png" alt="" title="Instrutor responsável"> Fabiano Mineiro | <img src="img/svg/icon-localizacao.png" alt="" title="Local da aula"> Ringue | 5 vagas</p>
-                    </div>
-                    <button class="btn btn-primary btn-reservar" data-id="3" data-name="Kickboxing Avançado"
-                        data-time="18:00">Reservar</button>
-                </div>
+                <p class="classes-empty">Buscando aulas cadastradas...</p>
             </div>
         </section>
 
@@ -238,16 +160,16 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <p class="stat-title">PRESENÇAS</p>
-                    <h3>11</h3>
-                    <p class="stat-subtitle">de 14 aulas</p>
+                    <h3 id="attendance-present-count">—</h3>
+                    <p class="stat-subtitle">registros de presença</p>
                 </div>
                 <div class="stat-card">
                     <p class="stat-title">FALTAS</p>
-                    <h3>3</h3>
+                    <h3 id="attendance-missed-count">—</h3>
                 </div>
                 <div class="stat-card">
                     <p class="stat-title">APROVEITAMENTO</p>
-                    <h3>79%</h3>
+                    <h3 id="attendance-percentage">—</h3>
                 </div>
             </div>
 
@@ -261,32 +183,7 @@
                             <th>STATUS</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>08/09/2026</td>
-                            <td>Boxe Manhã</td>
-                            <td>07:00</td>
-                            <td class="status-falta">X Falta</td>
-                        </tr>
-                        <tr>
-                            <td>07/09/2026</td>
-                            <td>Muay Thai Noite</td>
-                            <td>19:30</td>
-                            <td class="status-presente">✔ Presente</td>
-                        </tr>
-                        <tr>
-                            <td>06/09/2026</td>
-                            <td>Jiu-Jitsu Base</td>
-                            <td>20:30</td>
-                            <td class="status-presente">✔ Presente</td>
-                        </tr>
-                        <tr>
-                            <td>05/09/2026</td>
-                            <td>Funcional Express</td>
-                            <td>06:00</td>
-                            <td class="status-presente">✔ Presente</td>
-                        </tr>
-                    </tbody>
+                    <tbody id="attendance-body"><tr><td colspan="4">Carregando presenças...</td></tr></tbody>
                 </table>
             </div>
         </section>
@@ -295,43 +192,13 @@
         <section id="view-plano" class="view-section">
             <header class="view-header">
                 <h1>Meu Plano</h1>
-                <p>Troque de plano quando quiser, sem fidelidade.</p>
+                <p>Informações do seu plano atual.</p>
             </header>
 
-            <div class="planos-grid">
-                <div class="plano-card">
-                    <h3>Iniciante</h3>
-                    <div class="price">R$ 129<span class="tipo-assinatura">/mês</span></div>
-                    <ul>
-                        <li>2x por semana</li>
-                        <li>1 modalidade</li>
-                        <li>Acesso ao app</li>
-                    </ul>
-                    <button class="btn btn-trocar-plano">Mudar para este</button>
-                </div>
-                <div class="plano-card highlight">
-                    <div class="badge-atual">
-                        <span>PLANO ATUAL</span>
-                    </div>
-                    <h3>Competidor</h3>
-                    <div class="price">R$ 189<span class="tipo-assinatura">/mês</span></div>
-                    <ul>
-                        <li>Aulas livres</li>
-                        <li>Todas as modalidades</li>
-                        <li>Sparring supervisionado</li>
-                    </ul>
-                    <button class="btn btn-black" disabled>Ativo</button>
-                </div>
-                <div class="plano-card">
-                    <h3>Personal</h3>
-                    <div class="price">R$ 349<span class="tipo-assinatura">/mês</span></div>
-                    <ul>
-                        <li>8 sessões individuais</li>
-                        <li>Treino 1 a 1</li>
-                        <li>Horário flexível</li>
-                    </ul>
-                    <button class="btn btn-trocar-plano">Mudar para este</button>
-                </div>
+            <div class="panel student-membership-card">
+                <h2 id="membership-name">Carregando plano...</h2>
+                <p id="membership-description"></p>
+                <p id="membership-period"></p>
             </div>
 
             <h3 class="mt-2">Faturas</h3>
@@ -345,26 +212,7 @@
                             <th>STATUS</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>01/08/2026</td>
-                            <td>R$ 129</td>
-                            <td>Pix</td>
-                            <td class="status-falta">Atrasado</td>
-                        </tr>
-                        <tr>
-                            <td>02/08/2026</td>
-                            <td>R$ 189</td>
-                            <td>Cartão</td>
-                            <td class="status-presente">Pago</td>
-                        </tr>
-                        <tr>
-                            <td>03/08/2026</td>
-                            <td>R$ 349</td>
-                            <td>Pix</td>
-                            <td class="status-presente">Pago</td>
-                        </tr>
-                    </tbody>
+                    <tbody id="payments-body"><tr><td colspan="4">Carregando faturas...</td></tr></tbody>
                 </table>
             </div>
         </section>
