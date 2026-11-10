@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel administrativo - noCauTe</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="img/icone-nocaute.png" type="image/x-icon">
+    <style>.auth-pending { visibility: hidden; }</style>
+</head>
+<body class="dashboard-body auth-pending">
+    <!-- Acesso e saída do painel; sem sessão válida, esse painel nem aparece. -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="img/logo-nocaute.png" alt="noCauTe" class="logo">
+        </div>
+        <nav class="sidebar-nav" aria-label="Navegação administrativa">
+            <a class="nav-item active" href="#instrutores" aria-current="page">Instrutores</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="login.html" class="nav-item btn-logout">Sair</a>
+        </div>
+    </aside>
+
+    <header class="cabecalho">
+        <div class="info-cabecalho">
+            <div id="area">
+                <p style="font-weight: 700;">Painel Administrativo</p>
+                <p class="name-academia">CT Fabiano Mineiro</p>
+            </div>
+            <div id="perfil"><p id="perfil-nome">Administrador</p></div>
+        </div>
+    </header>
+
+    <main class="dashboard-main admin-main">
+        <!-- Aqui o admin cuida dos convites sem precisar mexer no banco na mão. -->
+        <section id="instrutores" class="admin-section">
+            <header class="view-header">
+                <p>Gestão de acesso</p>
+                <h1>Instrutores</h1>
+                <p>Convide instrutores. Eles receberão um link seguro para definir a própria senha.</p>
+            </header>
+
+            <p id="admin-message" class="admin-message" role="status" aria-live="polite" hidden></p>
+
+            <!-- O formulário manda o convite; não cria conta escondida nem senha padrão. -->
+            <form id="invite-form" class="admin-card invite-form">
+                <h2>Convidar instrutor</h2>
+                <label for="instructor-name">Nome completo</label>
+                <input id="instructor-name" name="name" type="text" maxlength="160" autocomplete="name" required>
+                <label for="instructor-email">E-mail</label>
+                <input id="instructor-email" name="email" type="email" maxlength="254" autocomplete="email" required>
+                <button id="invite-submit" class="btn btn-primary" type="submit">Enviar convite</button>
+            </form>
+
+            <!-- A lista mostra quem já entrou para a equipe. -->
+            <section class="admin-card instructor-list" aria-labelledby="instructor-list-heading">
+                <div class="admin-list-heading">
+                    <h2 id="instructor-list-heading">Instrutores cadastrados</h2>
+                    <button id="refresh-instructors" class="btn btn-outline" type="button">Atualizar lista</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>NOME</th><th>E-MAIL</th><th>STATUS</th><th>CADASTRO</th></tr>
+                        </thead>
+                        <tbody id="instructors-body">
+                            <tr><td colspan="4">Carregando instrutores...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script src="js/auth-session.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

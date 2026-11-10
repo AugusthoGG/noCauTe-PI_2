@@ -12,9 +12,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 <link rel="shortcut icon" href="img/icone-nocaute.png" type="image/x-icon">
+<!-- Esconde o painel até o servidor conferir quem entrou. -->
+<style>.auth-pending { visibility: hidden; }</style>
 </head>
 
-<body class="dashboard-body">
+<body class="dashboard-body auth-pending">
 
     <!-- Menu Lateral -->
     <aside class="sidebar" id="sidebar">
@@ -369,6 +371,8 @@
 
     </main>
 
+    <!-- Confere o acesso antes do script antigo carregar os dados do painel. -->
+    <script src="js/auth-session.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 

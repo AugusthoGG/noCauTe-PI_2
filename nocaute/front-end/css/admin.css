@@ -1,0 +1,97 @@
+/* Deixa o conteúdo no lugar sem fazer o admin caçar botão pela tela. */
+.admin-main {
+    padding: 1.5rem 2rem 3rem;
+}
+
+.admin-section {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* Cartões claros para separar cada parte do trabalho. */
+.admin-card {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    color: #242424;
+    background: #fff;
+    border: 1px solid #e2e3e3;
+    border-radius: 10px;
+}
+
+.admin-card h2 {
+    margin: 0 0 1rem;
+}
+
+/* Campos do convite: alinhados e grandes o bastante para dedos humanos. */
+.invite-form {
+    display: grid;
+    gap: 0.7rem;
+    max-width: 620px;
+}
+
+.invite-form label {
+    font-weight: 600;
+}
+
+.invite-form input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid #c9c9c9;
+    border-radius: 6px;
+    font: inherit;
+}
+
+.invite-form button {
+    justify-self: start;
+    margin-top: 0.5rem;
+}
+
+/* Cabeçalho da lista e avisos de sucesso ou erro. */
+.admin-list-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.admin-list-heading h2 {
+    margin: 0;
+}
+
+.admin-message {
+    margin: 1rem 0;
+    padding: 0.85rem 1rem;
+    color: #242424;
+    background: #fff7d6;
+    border-left: 4px solid #e1a700;
+    border-radius: 5px;
+}
+
+.admin-message[data-type="error"] {
+    background: #fff0ef;
+    border-left-color: #b42318;
+}
+
+.admin-message[data-type="success"] {
+    background: #ecfdf3;
+    border-left-color: #16803c;
+}
+
+.admin-empty {
+    padding: 1rem;
+    color: #5b5856;
+}
+
+/* No celular, empilha as coisas antes que virem uma torre torta. */
+@media (max-width: 768px) {
+    .admin-main {
+        margin-left: 0;
+        padding: 1rem;
+    }
+
+    .admin-list-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
