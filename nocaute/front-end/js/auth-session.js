@@ -1,9 +1,12 @@
 (() => {
     // Descobre qual painel abriu e pega os passes guardados neste navegador.
     const apiBaseUrl = 'https://nocaute-pi-2.onrender.com';
-    const currentPage = window.location.pathname.endsWith('/instrutor.html')
+    // Cloudflare Pages pode servir os arquivos HTML com URLs limpas (/admin).
+    // Reconhece os dois formatos para não classificar o painel admin como aluno.
+    const pagePath = window.location.pathname.replace(/\/+$/, '');
+    const currentPage = /\/instrutor(?:\.html)?$/i.test(pagePath)
         ? 'instrutor'
-        : window.location.pathname.endsWith('/admin.html')
+        : /\/admin(?:\.html)?$/i.test(pagePath)
             ? 'admin'
             : 'aluno';
 
