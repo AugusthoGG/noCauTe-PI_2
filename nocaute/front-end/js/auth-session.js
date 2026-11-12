@@ -1,6 +1,6 @@
 (() => {
     // Descobre qual painel abriu e pega os passes guardados neste navegador.
-    const apiBaseUrl = 'http://localhost:3001';
+    const apiBaseUrl = 'https://nocaute-pi-2.onrender.com';
     const currentPage = window.location.pathname.endsWith('/instrutor.html')
         ? 'instrutor'
         : window.location.pathname.endsWith('/admin.html')

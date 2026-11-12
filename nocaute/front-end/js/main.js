@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // O servidor confere o perfil de verdade; escolher "Admin" aqui não dá superpoder.
     let currentProfile = 'aluno';
     const authMessage = document.getElementById('auth-message');
-    const apiBaseUrl = 'http://localhost:3001';
+    const apiBaseUrl = 'https://nocaute-pi-2.onrender.com';
 
     // Recados visíveis na tela, porque adivinhar o erro é uma péssima brincadeira.
     function showAuthMessage(message, type = 'error') {

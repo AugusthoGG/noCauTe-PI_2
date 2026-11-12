@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const apiBaseUrl = 'http://localhost:3001';
+    const apiBaseUrl = 'https://nocaute-pi-2.onrender.com';
     const navItems = [...document.querySelectorAll('.nav-item[data-target]')];
     const views = [...document.querySelectorAll('.view-section')];
     const toastRegion = document.createElement('div');

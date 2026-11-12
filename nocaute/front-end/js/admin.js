@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // O painel carrega tudo da API; nenhum número vem de chute ou planilha fantasma.
-    const apiBaseUrl = 'http://localhost:3001';
+    const apiBaseUrl = 'https://nocaute-pi-2.onrender.com';
     const message = document.getElementById('admin-message');
     const inviteForm = document.getElementById('invite-form');
     const classForm = document.getElementById('class-form');
