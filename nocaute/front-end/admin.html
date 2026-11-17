@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,19 +10,42 @@
     <link rel="stylesheet" href="css/admin.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
     <link rel="shortcut icon" href="img/icone-nocaute.png" type="image/x-icon">
-    <style>.auth-pending { visibility: hidden; }</style>
+    <style>
+        .auth-pending {
+            visibility: hidden;
+        }
+    </style>
 </head>
+
 <body class="dashboard-body auth-pending">
     <aside class="sidebar">
         <div class="sidebar-header">
             <img src="img/logo-nocaute.png" alt="noCauTe" class="logo">
         </div>
         <nav class="sidebar-nav" aria-label="Navegação administrativa">
-            <a class="nav-item active" href="#dashboard" aria-current="page">Visão geral</a>
-            <a class="nav-item" href="#agenda-admin">Aulas e horários</a>
-            <a class="nav-item" href="#equipe-admin">Instrutores</a>
+            <a class="nav-item active" href="#dashboard" aria-current="page" data-target="view-inicio">
+                <img src="img/svg/icon-inicio.png" alt="" class="icon-sidebar">
+                Início
+            </a>
+            <a class="nav-item" href="#agenda-admin" data-target="view-aulas">
+                <img src="img/svg/icon-aulas.png" alt="" class="icon-sidebar">
+                Aulas e horários
+            </a>
+            <a class="nav-item" href="#equipe-admin" data-target="view-instrutor">
+                <img src="img/svg/icon-instrutor.png" alt="" class="icon-sidebar icon-instrutor">
+                Instrutores
+            </a>
+            <a class="nav-item" href="#alunos-admin" data-target="view-instrutor">
+                <img src="img/svg/icon-alunos.png" alt="" class="icon-sidebar">
+                Alunos
+            </a>
+            <a class="nav-item" href="#relatorios-admin" data-target="view-relatorios">
+                <img src="img/svg/icon-relatorio.png" alt="" class="icon-sidebar">
+                Relatórios
+            </a>
         </nav>
         <div class="sidebar-footer">
             <a href="login.html" class="nav-item btn-logout">Sair</a>
@@ -34,7 +58,9 @@
                 <p style="font-weight: 700;">Painel Administrativo</p>
                 <p class="name-academia">CT Fabiano Mineiro</p>
             </div>
-            <div id="perfil"><p id="perfil-nome">Administrador</p></div>
+            <div id="perfil">
+                <p id="perfil-nome">Administrador</p>
+            </div>
         </div>
     </header>
 
@@ -49,11 +75,23 @@
                 <p>Indicadores atualizados com os dados do Supabase.</p>
             </header>
             <div class="admin-stats-grid">
-                <article class="admin-stat-card"><span>Alunos ativos</span><strong id="metric-students">—</strong></article>
-                <article class="admin-stat-card"><span>Instrutores ativos</span><strong id="metric-instructors">—</strong></article>
-                <article class="admin-stat-card"><span>Aulas cadastradas</span><strong id="metric-classes">—</strong></article>
-                <article class="admin-stat-card"><span>Próximas aulas</span><strong id="metric-sessions">—</strong></article>
-                <article class="admin-stat-card"><span>Vagas reservadas</span><strong id="metric-reservations">—</strong></article>
+                <a href="#alunos-admin">
+                    <article class="admin-stat-card"><span>Alunos ativos</span><strong id="metric-students">—</strong>
+                    </article>
+                </a>
+                <a href="#equipe-admin">
+                    <article class="admin-stat-card"><span>Instrutores ativos</span><strong
+                            id="metric-instructors">—</strong></article>
+                </a>
+                <a href="#agenda-admin">
+                    <article class="admin-stat-card"><span>Aulas cadastradas</span><strong
+                            id="metric-classes">—</strong>
+                    </article>
+                </a>
+                <article class="admin-stat-card"><span>Próximas aulas</span><strong id="metric-sessions">—</strong>
+                </article>
+                <article class="admin-stat-card"><span>Vagas reservadas</span><strong
+                        id="metric-reservations">—</strong></article>
             </div>
 
             <section class="admin-card">
@@ -66,8 +104,19 @@
                 </div>
                 <div class="table-responsive">
                     <table class="data-table">
-                        <thead><tr><th>AULA</th><th>DATA E HORA</th><th>ALUNOS</th><th>INSTRUTOR</th></tr></thead>
-                        <tbody id="sessions-body"><tr><td colspan="4">Carregando dados...</td></tr></tbody>
+                        <thead>
+                            <tr>
+                                <th>AULA</th>
+                                <th>DATA E HORA</th>
+                                <th>ALUNOS</th>
+                                <th>INSTRUTOR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessions-body">
+                            <tr>
+                                <td colspan="4">Carregando dados...</td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </section>
@@ -76,8 +125,19 @@
                 <h2>Reservas recentes</h2>
                 <div class="table-responsive">
                     <table class="data-table">
-                        <thead><tr><th>ALUNO</th><th>AULA</th><th>HORÁRIO</th><th>RESERVA</th></tr></thead>
-                        <tbody id="reservations-body"><tr><td colspan="4">Carregando dados...</td></tr></tbody>
+                        <thead>
+                            <tr>
+                                <th>ALUNO</th>
+                                <th>AULA</th>
+                                <th>HORÁRIO</th>
+                                <th>RESERVA</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservations-body">
+                            <tr>
+                                <td colspan="4">Carregando dados...</td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </section>
@@ -91,18 +151,49 @@
                 <p>Cadastre modalidades, aulas e horários com instrutor responsável.</p>
             </header>
 
+            <section class="admin-card">
+                <div class="admin-list-heading">
+                    <div>
+                        <h2>Próximas aulas</h2>
+                        <p>Instrutor responsável e alunos inscritos em cada horário.</p>
+                    </div>
+                    <button id="refresh-dashboard" class="btn btn-outline" type="button">Atualizar dados</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>AULA</th>
+                                <th>DATA E HORA</th>
+                                <th>ALUNOS</th>
+                                <th>INSTRUTOR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessions-body">
+                            <tr>
+                                <td colspan="4">Carregando dados...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <div class="admin-form-grid">
                 <form id="class-form" class="admin-card admin-form">
                     <h2>Cadastrar aula</h2>
                     <label for="class-modality">Modalidade</label>
-                    <select id="class-modality" required><option value="">Carregando modalidades...</option></select>
+                    <select id="class-modality" required>
+                        <option value="">Carregando modalidades...</option>
+                    </select>
                     <label for="class-name">Nome da aula</label>
                     <input id="class-name" type="text" maxlength="120" required>
                     <label for="class-level">Nível</label>
                     <input id="class-level" type="text" maxlength="80" value="Todos os níveis">
                     <div class="admin-field-row">
-                        <div><label for="class-duration">Duração (min)</label><input id="class-duration" type="number" min="1" max="360" value="60" required></div>
-                        <div><label for="class-capacity">Vagas</label><input id="class-capacity" type="number" min="1" value="20" required></div>
+                        <div><label for="class-duration">Duração (min)</label><input id="class-duration" type="number"
+                                min="1" max="360" value="60" required></div>
+                        <div><label for="class-capacity">Vagas</label><input id="class-capacity" type="number" min="1"
+                                value="20" required></div>
                     </div>
                     <label for="class-location">Local</label>
                     <input id="class-location" type="text" maxlength="120" placeholder="Ex.: Ringue">
@@ -112,9 +203,13 @@
                 <form id="session-form" class="admin-card admin-form">
                     <h2>Agendar horário</h2>
                     <label for="session-class">Aula</label>
-                    <select id="session-class" required><option value="">Cadastre uma aula primeiro</option></select>
+                    <select id="session-class" required>
+                        <option value="">Cadastre uma aula primeiro</option>
+                    </select>
                     <label for="session-instructor">Instrutor</label>
-                    <select id="session-instructor" required><option value="">Carregando instrutores...</option></select>
+                    <select id="session-instructor" required>
+                        <option value="">Carregando instrutores...</option>
+                    </select>
                     <label for="session-start">Data e hora</label>
                     <input id="session-start" type="datetime-local" required>
                     <p class="admin-form-help">Duração, local e capacidade serão preenchidos com os dados da aula.</p>
@@ -130,6 +225,7 @@
                 <h1>Instrutores</h1>
                 <p>Convide instrutores. Eles receberão um link seguro para definir a própria senha.</p>
             </header>
+
 
             <form id="invite-form" class="admin-card admin-form invite-form">
                 <h2>Convidar instrutor</h2>
@@ -147,15 +243,102 @@
                 </div>
                 <div class="table-responsive">
                     <table class="data-table">
-                        <thead><tr><th>NOME</th><th>E-MAIL</th><th>STATUS</th><th>CADASTRO</th></tr></thead>
-                        <tbody id="instructors-body"><tr><td colspan="4">Carregando instrutores...</td></tr></tbody>
+                        <thead>
+                            <tr>
+                                <th>NOME</th>
+                                <th>E-MAIL</th>
+                                <th>STATUS</th>
+                                <th>CADASTRO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="instructors-body">
+                            <tr>
+                                <td colspan="4">Carregando instrutores...</td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </section>
+
+        </section>
+
+        <!-- VISÃO: RELATÓRIOS -->
+        <section id="relatorios-admin" class="admin-section admin-view">
+            <header class="view-header">
+                <h1>Relatórios</h1>
+                <p>Visão geral de desempenho. (Precisa linkar com o Banco de Dados para puxar esses dados)</p>
+            </header>
+            <!-- 1º CARD: Modalidade -->
+            <div class="graficos-relatorio">
+                <div class="chart-card relatorio">
+                    <h3 class="chart-title">Alunos por Modalidade</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="chartModalidade"></canvas>
+                    </div>
+                </div>
+
+                <!-- 2º CARD: Frequência -->
+                <div class="chart-card relatorio">
+                    <h3 class="chart-title">Frequência Semanal</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="graficoFrequencia"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card relatorio">
+                    <h3 class="chart-title">Alunos com Alta Taxa de Ausência</h3>
+
+                    <!-- Trocamos o chart-wrapper por uma div específica para a lista -->
+                    <div class="ausencia-wrapper">
+                        <a href="#alunos-admin">
+                            <ul class="lista-ausencias">
+
+                                <!-- Item 1 -->
+                                <li class="ausencia-item">
+                                    <div class="aluno-info">
+                                        <span class="aluno-nome">João Silva</span>
+                                        <span class="aluno-plano">Plano Trimestral</span>
+                                    </div>
+                                    <div class="aluno-faltas">
+                                        <span class="faltas-num">8 faltas</span>
+                                        <span class="faltas-mes">neste mês</span>
+                                    </div>
+                                </li>
+
+                                <!-- Item 2 -->
+                                <li class="ausencia-item">
+                                    <div class="aluno-info">
+                                        <span class="aluno-nome">Maria Oliveira</span>
+                                        <span class="aluno-plano">Plano Mensal</span>
+                                    </div>
+                                    <div class="aluno-faltas">
+                                        <span class="faltas-num">6 faltas</span>
+                                        <span class="faltas-mes">neste mês</span>
+                                    </div>
+                                </li>
+
+                                <!-- Item 3 -->
+                                <li class="ausencia-item">
+                                    <div class="aluno-info">
+                                        <span class="aluno-nome">Carlos Eduardo</span>
+                                        <span class="aluno-plano">Plano Semestral</span>
+                                    </div>
+                                    <div class="aluno-faltas">
+                                        <span class="faltas-num">5 faltas</span>
+                                        <span class="faltas-mes">neste mês</span>
+                                    </div>
+                                </li>
+
+                            </ul>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            </div>
         </section>
     </main>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/auth-session.js"></script>
     <script src="js/admin.js"></script>
 </body>
+
 </html>

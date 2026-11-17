@@ -11,7 +11,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const classSelect = document.getElementById('session-class');
     const instructorSelect = document.getElementById('session-instructor');
     const modalitySelect = document.getElementById('class-modality');
+    const views = [...document.querySelectorAll('.view-section')];
     let catalog = { modalities: [], classes: [], instructors: [] };
+    // --- Controle de Navegação entre Seções ---
+    const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+    const sections = document.querySelectorAll('.admin-view');
+
+    function ativarSecao(sectionId) {
+        // Esconde todas as seções e exibe apenas a selecionada
+        sections.forEach(section => {
+            section.style.display = (`#${section.id}` === sectionId) ? '' : 'none';
+        });
+
+        // Atualiza o botão ativo e acessibilidade no menu
+        navItems.forEach(item => {
+            const isSelected = item.getAttribute('href') === sectionId;
+            item.classList.toggle('active', isSelected);
+            
+            if (isSelected) {
+                item.setAttribute('aria-current', 'page');
+            } else {
+                item.removeAttribute('aria-current');
+            }
+        });
+    }
+
+    navItems.forEach(item => {
+        item.addEventListener('click', (event) => {
+            event.preventDefault();
+            const targetId = item.getAttribute('href');
+            
+            ativarSecao(targetId);
+            history.pushState(null, '', targetId);
+        });
+    });
+
+    window.addEventListener('popstate', () => {
+        ativarSecao(window.location.hash || '#dashboard');
+    });
+
+    // Inicia exibindo a seção da URL ou o #dashboard por padrão
+    ativarSecao(window.location.hash || '#dashboard');
 
     // Deixa o resultado da operação visível, inclusive quando a API disser "não".
     function showMessage(text, type = 'success') {
@@ -322,3 +362,161 @@ document.addEventListener('DOMContentLoaded', () => {
         loadDashboard().catch(error => console.error('Falha ao atualizar o dashboard.', error));
     }, 30_000);
 });
+
+
+// --- 1. Variáveis de Controle ---
+    const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+    const sections = document.querySelectorAll('.admin-view');
+    let instanciaChartModalidade = null;
+    let instanciaChartFrequencia = null;
+
+    // --- 2. Função de Gráficos e Relatórios ---
+    async function carregarRelatorios() {
+        // DADOS (Substitua estes mocks pelas suas consultas do Supabase)
+        const dadosModalidades = {
+            labels: ['Muay Thai', 'Jiu-Jitsu', 'Boxe', 'MMA'],
+            valores: [45, 38, 25, 14]
+        };
+
+        const dadosFrequencia = {
+            labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+            esperados: [75, 70, 80, 75, 65, 40], // Ex: reservas ou alunos matriculados no dia
+            presentes: [62, 58, 70, 64, 51, 30]  // Ex: check-ins confirmados
+        };
+
+        const dadosAusencias = [
+            { nome: 'João Silva', plano: 'Plano Trimestral', faltas: 8 },
+            { nome: 'Maria Oliveira', plano: 'Plano Mensal', faltas: 6 },
+            { nome: 'Carlos Eduardo', plano: 'Plano Semestral', faltas: 5 }
+        ];
+
+        // GRÁFICO 1: Alunos por Modalidade
+        const ctxModalidade = document.getElementById('chartModalidade');
+        if (ctxModalidade) {
+            if (instanciaChartModalidade) instanciaChartModalidade.destroy();
+
+            instanciaChartModalidade = new Chart(ctxModalidade, {
+                type: 'doughnut',
+                data: {
+                    labels: dadosModalidades.labels,
+                    datasets: [{
+                        data: dadosModalidades.valores,
+                        backgroundColor: ['#e63946', '#1d3557', '#457b9d', '#f4a261'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // GRÁFICO 2: Frequência Semanal (Esperados x Presentes)
+        const ctxFrequencia = document.getElementById('graficoFrequencia');
+        if (ctxFrequencia) {
+            if (instanciaChartFrequencia) instanciaChartFrequencia.destroy();
+
+            instanciaChartFrequencia = new Chart(ctxFrequencia, {
+                type: 'bar',
+                data: {
+                    labels: dadosFrequencia.labels,
+                    datasets: [
+                        {
+                            label: 'Alunos Esperados',
+                            data: dadosFrequencia.esperados,
+                            backgroundColor: '#457b9d',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Alunos Presentes',
+                            data: dadosFrequencia.presentes,
+                            backgroundColor: '#e63946',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // LISTA: Alunos com Alta Taxa de Ausência
+        const listaAusenciasEl = document.querySelector('.lista-ausencias');
+        if (listaAusenciasEl) {
+            if (dadosAusencias.length === 0) {
+                listaAusenciasEl.innerHTML = '<li class="ausencia-item">Nenhuma ausência crítica registrada neste mês.</li>';
+            } else {
+                listaAusenciasEl.innerHTML = dadosAusencias.map(aluno => `
+                    <li class="ausencia-item">
+                        <div class="aluno-info">
+                            <span class="aluno-nome">${aluno.nome}</span>
+                            <span class="aluno-plano">${aluno.plano}</span>
+                        </div>
+                        <div class="aluno-faltas">
+                            <span class="faltas-num">${aluno.faltas} faltas</span>
+                            <span class="faltas-mes">neste mês</span>
+                        </div>
+                    </li>
+                `).join('');
+            }
+        }
+    }
+
+    // --- 3. Função de Navegação entre Seções ---
+    function ativarSecao(sectionId) {
+        sections.forEach(section => {
+            section.style.display = (`#${section.id}` === sectionId) ? '' : 'none';
+        });
+
+        navItems.forEach(item => {
+            const isSelected = item.getAttribute('href') === sectionId;
+            item.classList.toggle('active', isSelected);
+
+            if (isSelected) {
+                item.setAttribute('aria-current', 'page');
+            } else {
+                item.removeAttribute('aria-current');
+            }
+        });
+
+        if (sectionId === '#relatorios-admin') {
+            carregarRelatorios();
+        }
+    }
+
+    // --- 4. Eventos de Clique e Histórico ---
+    navItems.forEach(item => {
+        item.addEventListener('click', (event) => {
+            event.preventDefault();
+            const targetId = item.getAttribute('href');
+
+            ativarSecao(targetId);
+            history.pushState(null, '', targetId);
+        });
+    });
+
+    window.addEventListener('popstate', () => {
+        ativarSecao(window.location.hash || '#dashboard');
+    });
+
+    // --- 5. Inicialização ---
+    ativarSecao(window.location.hash || '#dashboard');
