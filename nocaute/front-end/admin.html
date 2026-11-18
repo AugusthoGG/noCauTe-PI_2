@@ -221,6 +221,57 @@
             </div>
         </section>
 
+        <section id="alunos-admin" class="admin-section admin-view">
+            <header class="view-header">
+                <p>Gestão de alunos</p>
+                <h1>Alunos e planos</h1>
+                <p>Atribua um plano ativo a um aluno cadastrado.</p>
+            </header>
+
+            <form id="membership-form" class="admin-card admin-form invite-form">
+                <h2>Atribuir plano</h2>
+                <label for="membership-student">Aluno</label>
+                <select id="membership-student" required>
+                    <option value="">Carregando alunos...</option>
+                </select>
+                <label for="membership-plan">Plano</label>
+                <select id="membership-plan" required>
+                    <option value="">Carregando planos...</option>
+                </select>
+                <p class="admin-form-help">O plano será ativado a partir de hoje, com o preço cadastrado no Supabase.</p>
+                <button id="membership-submit" class="btn btn-primary" type="submit">Atribuir plano</button>
+            </form>
+
+            <section class="admin-card">
+                <div class="admin-list-heading">
+                    <div>
+                        <h2>Planos dos alunos</h2>
+                        <p>Vínculos atuais e anteriores registrados no banco.</p>
+                    </div>
+                    <button id="refresh-memberships" class="btn btn-outline" type="button">Atualizar lista</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ALUNO</th>
+                                <th>PLANO</th>
+                                <th>VALOR</th>
+                                <th>STATUS</th>
+                                <th>INÍCIO</th>
+                                <th>TÉRMINO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberships-body">
+                            <tr>
+                                <td colspan="6">Carregando planos dos alunos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+
         <!-- Convites criam acessos de instrutor, sem cadastro privilegiado aberto. -->
         <section id="equipe-admin" class="admin-section admin-view">
             <header class="view-header">

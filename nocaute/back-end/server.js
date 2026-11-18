@@ -845,6 +845,188 @@ app.get("/api/admin/dashboard", requireAuth, requireAdmin, async (_req, res) => 
   });
 });
 
+// Gera os relatórios a partir das reservas e chamadas registradas no Supabase.
+app.get("/api/admin/reports", requireAuth, requireAdmin, async (_req, res) => {
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para habilitar os relatórios." });
+  }
+
+  const pageSize = 1000;
+  const fetchPaged = async queryFactory => {
+    const rows = [];
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await queryFactory().range(from, from + pageSize - 1);
+      if (error) throw error;
+      rows.push(...(data || []));
+      if (!data || data.length < pageSize) break;
+    }
+    return rows;
+  };
+  const fetchByIdBatches = async (ids, queryFactory) => {
+    const rows = [];
+    for (let index = 0; index < ids.length; index += 100) {
+      rows.push(...await fetchPaged(() => queryFactory(ids.slice(index, index + 100))));
+    }
+    return rows;
+  };
+
+  const now = new Date();
+  const rollingStart = new Date(now);
+  rollingStart.setDate(rollingStart.getDate() - 29);
+  const saoPauloParts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit"
+  }).formatToParts(now).map(part => [part.type, part.value]));
+  const monthStart = new Date(`${saoPauloParts.year}-${saoPauloParts.month}-01T00:00:00-03:00`);
+  const queryStart = rollingStart < monthStart ? rollingStart : monthStart;
+
+  try {
+    const sessions = await fetchPaged(() => adminClient.from("class_sessions")
+      .select("id, starts_at, status, class:classes(id, modality:modalities(name))")
+      .gte("starts_at", queryStart.toISOString())
+      .lte("starts_at", now.toISOString())
+      .neq("status", "cancelada")
+      .order("starts_at", { ascending: true }));
+    const sessionById = new Map(sessions.map(session => [session.id, session]));
+    const sessionIds = sessions.map(session => session.id);
+
+    let reservations = [];
+    let attendance = [];
+    if (sessionIds.length) {
+      [reservations, attendance] = await Promise.all([
+        fetchByIdBatches(sessionIds, ids => adminClient.from("reservations")
+          .select("session_id, student_id")
+          .in("session_id", ids)
+          .eq("status", "reservada")),
+        fetchByIdBatches(sessionIds, ids => adminClient.from("attendance")
+          .select("session_id, student_id, status")
+          .in("session_id", ids))
+      ]);
+    }
+
+    const memberships = await fetchPaged(() => adminClient.from("memberships")
+      .select("student_id, status, plan:membership_plans(name)")
+      .eq("status", "ativa"));
+    const studentIds = [...new Set([
+      ...reservations.map(row => row.student_id),
+      ...attendance.map(row => row.student_id),
+      ...memberships.map(row => row.student_id)
+    ])];
+    const profiles = studentIds.length
+      ? await fetchByIdBatches(studentIds, ids => adminClient.from("profiles")
+        .select("id, full_name, role, status")
+        .in("id", ids)
+        .eq("role", "aluno"))
+      : [];
+
+    const profileById = new Map(profiles.map(profile => [profile.id, profile]));
+    const planByStudent = new Map(memberships.map(membership => [
+      membership.student_id,
+      Array.isArray(membership.plan) ? membership.plan[0]?.name : membership.plan?.name
+    ]));
+    const activeMembershipStudentIds = new Set(memberships.map(membership => membership.student_id));
+    const modalityStudents = new Map();
+    const studentsWithoutRecentModality = new Set(profiles
+      .filter(profile => profile.status === "ativo" && activeMembershipStudentIds.has(profile.id))
+      .map(profile => profile.id));
+    if (studentsWithoutRecentModality.size) {
+      modalityStudents.set("Sem modalidade", studentsWithoutRecentModality);
+    }
+    const expectedByWeekday = [0, 0, 0, 0, 0, 0];
+    const presentByWeekday = [0, 0, 0, 0, 0, 0];
+    const expectedPairs = new Set();
+    const presentPairs = new Set();
+    const absenceCounts = new Map();
+    const weekdayFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "short"
+    });
+    const weekdayIndexes = new Map([["Mon", 0], ["Tue", 1], ["Wed", 2], ["Thu", 3], ["Fri", 4], ["Sat", 5]]);
+    const modalityForSession = session => session?.class?.modality?.name || "Sem modalidade";
+    const isRollingSession = session => new Date(session.starts_at) >= rollingStart;
+
+    const addStudentToModality = (session, studentId) => {
+      const profile = profileById.get(studentId);
+      if (!profile || profile.status !== "ativo" || !activeMembershipStudentIds.has(studentId) || !isRollingSession(session)) return;
+      const modality = modalityForSession(session);
+      if (modality !== "Sem modalidade") {
+        studentsWithoutRecentModality.delete(studentId);
+        if (!studentsWithoutRecentModality.size) modalityStudents.delete("Sem modalidade");
+      }
+      if (!modalityStudents.has(modality)) modalityStudents.set(modality, new Set());
+      modalityStudents.get(modality).add(studentId);
+    };
+
+    reservations.forEach(row => {
+      const session = sessionById.get(row.session_id);
+      const profile = profileById.get(row.student_id);
+      if (!session || !profile || profile.status !== "ativo" || !activeMembershipStudentIds.has(row.student_id)) return;
+      addStudentToModality(session, row.student_id);
+      if (!isRollingSession(session)) return;
+      const pair = `${row.session_id}:${row.student_id}`;
+      expectedPairs.add(pair);
+      const weekday = weekdayIndexes.get(weekdayFormatter.format(new Date(session.starts_at)));
+      if (weekday !== undefined) expectedByWeekday[weekday] += 1;
+    });
+
+    attendance.forEach(row => {
+      const session = sessionById.get(row.session_id);
+      const profile = profileById.get(row.student_id);
+      if (!session || !profile || profile.status !== "ativo" || !activeMembershipStudentIds.has(row.student_id)) return;
+      addStudentToModality(session, row.student_id);
+      const pair = `${row.session_id}:${row.student_id}`;
+      if (isRollingSession(session) && ["presente", "falta", "justificada"].includes(row.status)) {
+        if (!expectedPairs.has(pair)) {
+          expectedPairs.add(pair);
+          const weekday = weekdayIndexes.get(weekdayFormatter.format(new Date(session.starts_at)));
+          if (weekday !== undefined) expectedByWeekday[weekday] += 1;
+        }
+        if (row.status === "presente") presentPairs.add(pair);
+      }
+
+      if (row.status === "falta" && new Date(session.starts_at) >= monthStart) {
+        const current = absenceCounts.get(row.student_id) || 0;
+        absenceCounts.set(row.student_id, current + 1);
+      }
+    });
+
+    presentPairs.forEach(pair => {
+      const sessionId = pair.slice(0, pair.indexOf(":"));
+      const session = sessionById.get(sessionId);
+      if (!session) return;
+      const weekday = weekdayIndexes.get(weekdayFormatter.format(new Date(session.starts_at)));
+      if (weekday !== undefined) presentByWeekday[weekday] += 1;
+    });
+
+    const absences = [...absenceCounts]
+      .map(([studentId, count]) => ({
+        studentName: profileById.get(studentId)?.full_name || "Aluno",
+        planName: planByStudent.get(studentId) || "Sem plano ativo",
+        count
+      }))
+      .sort((first, second) => second.count - first.count || first.studentName.localeCompare(second.studentName, "pt-BR"))
+      .slice(0, 3);
+
+    return res.json({
+      modality: {
+        labels: [...modalityStudents.keys()],
+        values: [...modalityStudents.values()].map(studentSet => studentSet.size)
+      },
+      weeklyAttendance: {
+        labels: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
+        expected: expectedByWeekday,
+        present: presentByWeekday
+      },
+      absences
+    });
+  } catch (error) {
+    console.error("Falha ao carregar relatórios administrativos:", error.message);
+    return res.status(503).json({ error: "Não foi possível carregar os relatórios do banco de dados." });
+  }
+});
+
 // Alimenta os seletores da tela com modalidades, aulas e instrutores ativos.
 app.get("/api/admin/catalog", requireAuth, requireAdmin, async (_req, res) => {
   const adminClient = createAdminClient();
@@ -864,6 +1046,139 @@ app.get("/api/admin/catalog", requireAuth, requireAdmin, async (_req, res) => {
     return res.status(503).json({ error: "Não foi possível carregar as opções do painel." });
   }
   return res.json({ modalities, classes, instructors });
+});
+
+// Carrega alunos sem plano ativo e o catálogo de planos para o vínculo administrativo.
+app.get("/api/admin/memberships/options", requireAuth, requireAdmin, async (_req, res) => {
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para gerenciar planos." });
+  }
+
+  const [
+    { data: students, error: studentsError },
+    { data: plans, error: plansError },
+    { data: activeMemberships, error: membershipsError },
+    { data: users, error: usersError }
+  ] = await Promise.all([
+    adminClient.from("profiles")
+      .select("id, full_name")
+      .eq("role", "aluno")
+      .eq("status", "ativo")
+      .order("full_name"),
+    adminClient.from("membership_plans")
+      .select("id, name, price, billing_interval")
+      .eq("active", true)
+      .order("name"),
+    adminClient.from("memberships")
+      .select("student_id, plan:membership_plans(name)")
+      .eq("status", "ativa"),
+    adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 })
+  ]);
+
+  const queryError = studentsError || plansError || membershipsError || usersError;
+  if (queryError) {
+    console.error("Falha ao carregar opções de planos para alunos:", queryError.message);
+    return res.status(503).json({ error: "Não foi possível carregar os alunos e planos." });
+  }
+
+  const emailById = new Map(users.users.map(user => [user.id, user.email || ""]));
+  const activePlanByStudent = new Map(activeMemberships.map(membership => {
+    const plan = Array.isArray(membership.plan) ? membership.plan[0] : membership.plan;
+    return [membership.student_id, plan?.name || "Plano ativo"];
+  }));
+
+  return res.json({
+    students: students.map(student => ({
+      id: student.id,
+      fullName: student.full_name,
+      email: emailById.get(student.id) || "",
+      activePlanName: activePlanByStudent.get(student.id) || null
+    })),
+    plans
+  });
+});
+
+// Mostra os vínculos já registrados, inclusive os encerrados ou pendentes.
+app.get("/api/admin/memberships", requireAuth, requireAdmin, async (_req, res) => {
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para gerenciar planos." });
+  }
+
+  const { data, error } = await adminClient.from("memberships")
+    .select("id, status, starts_on, ends_on, price_at_purchase, created_at, student:profiles!memberships_student_id_fkey(full_name), plan:membership_plans!memberships_plan_id_fkey(name, billing_interval)")
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (error) {
+    console.error("Falha ao listar planos dos alunos:", error.message);
+    return res.status(503).json({ error: "Não foi possível carregar os planos dos alunos." });
+  }
+  return res.json({ memberships: data });
+});
+
+// Atribui um plano ativo a um aluno; o preço vem do catálogo, nunca do navegador.
+app.post("/api/admin/memberships", requireAuth, requireAdmin, async (req, res) => {
+  const { studentId, planId } = req.body || {};
+  if (typeof studentId !== "string" || typeof planId !== "string") {
+    return res.status(400).json({ error: "Selecione um aluno e um plano." });
+  }
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para gerenciar planos." });
+  }
+
+  const [
+    { data: student, error: studentError },
+    { data: plan, error: planError },
+    { data: existingMembership, error: membershipError }
+  ] = await Promise.all([
+    adminClient.from("profiles")
+      .select("id")
+      .eq("id", studentId)
+      .eq("role", "aluno")
+      .eq("status", "ativo")
+      .maybeSingle(),
+    adminClient.from("membership_plans")
+      .select("id, price")
+      .eq("id", planId)
+      .eq("active", true)
+      .maybeSingle(),
+    adminClient.from("memberships")
+      .select("id")
+      .eq("student_id", studentId)
+      .eq("status", "ativa")
+      .maybeSingle()
+  ]);
+
+  const validationError = studentError || planError || membershipError;
+  if (validationError) {
+    console.error("Falha ao validar aluno ou plano para atribuição:", validationError.message);
+    return res.status(503).json({ error: "Não foi possível validar o aluno e o plano selecionados." });
+  }
+  if (!student) return res.status(404).json({ error: "Aluno ativo não encontrado." });
+  if (!plan) return res.status(404).json({ error: "Plano ativo não encontrado." });
+  if (existingMembership) {
+    return res.status(409).json({ error: "Este aluno já possui um plano ativo." });
+  }
+
+  const { data, error } = await adminClient.from("memberships").insert({
+    student_id: student.id,
+    plan_id: plan.id,
+    status: "ativa",
+    price_at_purchase: plan.price
+  }).select("id, student_id, plan_id, status, starts_on, ends_on, price_at_purchase").single();
+
+  if (error) {
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "Este aluno já possui um plano ativo." });
+    }
+    console.error("Falha ao atribuir plano ao aluno:", error.message);
+    return res.status(503).json({ error: "Não foi possível atribuir este plano ao aluno." });
+  }
+  return res.status(201).json({ membership: data, message: "Plano atribuído ao aluno com sucesso." });
 });
 
 // Cria a ficha da aula; o horário é cadastrado separadamente.

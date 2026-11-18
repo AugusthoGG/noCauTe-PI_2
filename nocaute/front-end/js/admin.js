@@ -5,12 +5,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const inviteForm = document.getElementById('invite-form');
     const classForm = document.getElementById('class-form');
     const sessionForm = document.getElementById('session-form');
+    const membershipForm = document.getElementById('membership-form');
     const instructorsBody = document.getElementById('instructors-body');
     const sessionsBody = document.getElementById('sessions-body');
     const reservationsBody = document.getElementById('reservations-body');
+    const membershipsBody = document.getElementById('memberships-body');
     const classSelect = document.getElementById('session-class');
     const instructorSelect = document.getElementById('session-instructor');
     const modalitySelect = document.getElementById('class-modality');
+    const membershipStudentSelect = document.getElementById('membership-student');
+    const membershipPlanSelect = document.getElementById('membership-plan');
+    const membershipSubmit = document.getElementById('membership-submit');
     const views = [...document.querySelectorAll('.view-section')];
     let catalog = { modalities: [], classes: [], instructors: [] };
     // --- Controle de Navegação entre Seções ---
@@ -100,6 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return data;
     }
+    // A navegação dos relatórios fica fora deste escopo e reutiliza a mesma sessão autenticada.
+    window.adminApiRequest = apiRequest;
 
     function addCell(row, text) {
         const cell = document.createElement('td');
@@ -119,6 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatDate(value, options = {}) {
         if (!value) return '—';
         return new Intl.DateTimeFormat('pt-BR', options).format(new Date(value));
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
     }
 
     function setMetrics(metrics) {
@@ -245,6 +256,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    async function loadMembershipOptions() {
+        const { students, plans } = await apiRequest('/api/admin/memberships/options');
+        const studentsWithoutActivePlan = students.filter(student => !student.activePlanName);
+        fillSelect(
+            membershipStudentSelect,
+            studentsWithoutActivePlan,
+            studentsWithoutActivePlan.length ? 'Selecione um aluno' : 'Todos os alunos já têm plano ativo',
+            student => `${student.fullName || 'Aluno'}${student.email ? ` · ${student.email}` : ''}`
+        );
+        fillSelect(
+            membershipPlanSelect,
+            plans,
+            plans.length ? 'Selecione um plano' : 'Nenhum plano ativo cadastrado',
+            plan => `${plan.name} — ${formatCurrency(plan.price)} / ${plan.billing_interval}`
+        );
+        membershipSubmit.disabled = !studentsWithoutActivePlan.length || !plans.length;
+    }
+
+    function renderMemberships(memberships) {
+        if (!memberships.length) {
+            addEmptyRow(membershipsBody, 6, 'Nenhum plano foi atribuído a alunos ainda.');
+            return;
+        }
+
+        const rows = memberships.map(membership => {
+            const row = document.createElement('tr');
+            const student = Array.isArray(membership.student) ? membership.student[0] : membership.student;
+            const plan = Array.isArray(membership.plan) ? membership.plan[0] : membership.plan;
+            addCell(row, student?.full_name || 'Aluno');
+            addCell(row, plan?.name || 'Plano');
+            addCell(row, formatCurrency(membership.price_at_purchase));
+            addCell(row, membership.status.charAt(0).toUpperCase() + membership.status.slice(1));
+            addCell(row, formatDate(`${membership.starts_on}T12:00:00`, { dateStyle: 'short' }));
+            addCell(row, membership.ends_on
+                ? formatDate(`${membership.ends_on}T12:00:00`, { dateStyle: 'short' })
+                : 'Sem data definida');
+            return row;
+        });
+        membershipsBody.replaceChildren(...rows);
+    }
+
+    async function loadMemberships() {
+        const { memberships } = await apiRequest('/api/admin/memberships');
+        renderMemberships(memberships);
+    }
+
     // Preenche as listas com o que já existe no banco.
     async function loadCatalog() {
         catalog = await apiRequest('/api/admin/catalog');
@@ -274,6 +331,27 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage(error.message, 'error');
         } finally {
             submit.disabled = false;
+        }
+    });
+
+    membershipForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        membershipSubmit.disabled = true;
+        try {
+            const result = await apiRequest('/api/admin/memberships', {
+                method: 'POST',
+                body: JSON.stringify({
+                    studentId: membershipStudentSelect.value,
+                    planId: membershipPlanSelect.value
+                })
+            });
+            showMessage(result.message);
+            membershipForm.reset();
+            await Promise.all([loadMembershipOptions(), loadMemberships()]);
+        } catch (error) {
+            showMessage(error.message, 'error');
+        } finally {
+            membershipSubmit.disabled = !membershipStudentSelect.value || !membershipPlanSelect.value;
         }
     });
 
@@ -338,6 +416,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('refresh-instructors').addEventListener('click', () => {
         loadInstructors().catch(error => showMessage(error.message, 'error'));
     });
+    document.getElementById('refresh-memberships').addEventListener('click', () => {
+        Promise.all([loadMembershipOptions(), loadMemberships()])
+            .catch(error => showMessage(error.message, 'error'));
+    });
 
     document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(link => {
         link.addEventListener('click', () => {
@@ -346,13 +428,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Atualiza tudo ao abrir e renova os dados de tempos em tempos.
-    loadCatalog().then(() => Promise.all([loadDashboard(), loadInstructors()])).catch(error => {
-        console.error('Falha ao carregar o painel administrativo.', error);
-        showMessage(error.message, 'error');
-        addEmptyRow(sessionsBody, 4, 'Não foi possível carregar as aulas.');
-        addEmptyRow(reservationsBody, 4, 'Não foi possível carregar as reservas.');
-        addEmptyRow(instructorsBody, 4, 'Não foi possível carregar os instrutores.');
-    });
+    Promise.all([loadCatalog(), loadMembershipOptions(), loadMemberships()])
+        .then(() => Promise.all([loadDashboard(), loadInstructors()]))
+        .catch(error => {
+            console.error('Falha ao carregar o painel administrativo.', error);
+            showMessage(error.message, 'error');
+            addEmptyRow(sessionsBody, 4, 'Não foi possível carregar as aulas.');
+            addEmptyRow(reservationsBody, 4, 'Não foi possível carregar as reservas.');
+            addEmptyRow(instructorsBody, 4, 'Não foi possível carregar os instrutores.');
+            addEmptyRow(membershipsBody, 6, 'Não foi possível carregar os planos dos alunos.');
+        });
 
     const startInput = document.getElementById('session-start');
     const localNow = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
@@ -360,6 +445,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.setInterval(() => {
         loadDashboard().catch(error => console.error('Falha ao atualizar o dashboard.', error));
+        if (window.location.hash === '#relatorios-admin') {
+            window.carregarRelatorios?.();
+        }
     }, 30_000);
 });
 
@@ -369,117 +457,135 @@ document.addEventListener('DOMContentLoaded', () => {
     const sections = document.querySelectorAll('.admin-view');
     let instanciaChartModalidade = null;
     let instanciaChartFrequencia = null;
+    let carregandoRelatorios = false;
 
     // --- 2. Função de Gráficos e Relatórios ---
     async function carregarRelatorios() {
-        // DADOS (Substitua estes mocks pelas suas consultas do Supabase)
-        const dadosModalidades = {
-            labels: ['Muay Thai', 'Jiu-Jitsu', 'Boxe', 'MMA'],
-            valores: [45, 38, 25, 14]
-        };
-
-        const dadosFrequencia = {
-            labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
-            esperados: [75, 70, 80, 75, 65, 40], // Ex: reservas ou alunos matriculados no dia
-            presentes: [62, 58, 70, 64, 51, 30]  // Ex: check-ins confirmados
-        };
-
-        const dadosAusencias = [
-            { nome: 'João Silva', plano: 'Plano Trimestral', faltas: 8 },
-            { nome: 'Maria Oliveira', plano: 'Plano Mensal', faltas: 6 },
-            { nome: 'Carlos Eduardo', plano: 'Plano Semestral', faltas: 5 }
-        ];
-
-        // GRÁFICO 1: Alunos por Modalidade
-        const ctxModalidade = document.getElementById('chartModalidade');
-        if (ctxModalidade) {
-            if (instanciaChartModalidade) instanciaChartModalidade.destroy();
-
-            instanciaChartModalidade = new Chart(ctxModalidade, {
-                type: 'doughnut',
-                data: {
-                    labels: dadosModalidades.labels,
-                    datasets: [{
-                        data: dadosModalidades.valores,
-                        backgroundColor: ['#e63946', '#1d3557', '#457b9d', '#f4a261'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
+        if (carregandoRelatorios) return;
+        carregandoRelatorios = true;
+        if (!window.adminApiRequest && document.readyState === 'loading') {
+            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
         }
 
-        // GRÁFICO 2: Frequência Semanal (Esperados x Presentes)
-        const ctxFrequencia = document.getElementById('graficoFrequencia');
-        if (ctxFrequencia) {
-            if (instanciaChartFrequencia) instanciaChartFrequencia.destroy();
+        try {
+            if (!window.adminApiRequest) throw new Error('A sessão administrativa ainda não está pronta. Atualize a página e tente novamente.');
+            const dados = await window.adminApiRequest('/api/admin/reports');
 
-            instanciaChartFrequencia = new Chart(ctxFrequencia, {
-                type: 'bar',
-                data: {
-                    labels: dadosFrequencia.labels,
-                    datasets: [
-                        {
-                            label: 'Alunos Esperados',
-                            data: dadosFrequencia.esperados,
-                            backgroundColor: '#457b9d',
-                            borderRadius: 6
+            const ctxModalidade = document.getElementById('chartModalidade');
+            if (ctxModalidade) {
+                if (instanciaChartModalidade) {
+                    instanciaChartModalidade.data.labels = dados.modality.labels;
+                    instanciaChartModalidade.data.datasets[0].data = dados.modality.values;
+                    instanciaChartModalidade.update();
+                } else {
+                    instanciaChartModalidade = new Chart(ctxModalidade, {
+                        type: 'doughnut',
+                        data: {
+                            labels: dados.modality.labels,
+                            datasets: [{
+                                data: dados.modality.values,
+                                backgroundColor: ['#e63946', '#1d3557', '#457b9d', '#f4a261'],
+                                borderWidth: 0
+                            }]
                         },
-                        {
-                            label: 'Alunos Presentes',
-                            data: dadosFrequencia.presentes,
-                            backgroundColor: '#e63946',
-                            borderRadius: 6
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'bottom' } }
                         }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom'
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
+                    });
                 }
-            });
-        }
-
-        // LISTA: Alunos com Alta Taxa de Ausência
-        const listaAusenciasEl = document.querySelector('.lista-ausencias');
-        if (listaAusenciasEl) {
-            if (dadosAusencias.length === 0) {
-                listaAusenciasEl.innerHTML = '<li class="ausencia-item">Nenhuma ausência crítica registrada neste mês.</li>';
-            } else {
-                listaAusenciasEl.innerHTML = dadosAusencias.map(aluno => `
-                    <li class="ausencia-item">
-                        <div class="aluno-info">
-                            <span class="aluno-nome">${aluno.nome}</span>
-                            <span class="aluno-plano">${aluno.plano}</span>
-                        </div>
-                        <div class="aluno-faltas">
-                            <span class="faltas-num">${aluno.faltas} faltas</span>
-                            <span class="faltas-mes">neste mês</span>
-                        </div>
-                    </li>
-                `).join('');
             }
+
+            const ctxFrequencia = document.getElementById('graficoFrequencia');
+            if (ctxFrequencia) {
+                if (instanciaChartFrequencia) {
+                    instanciaChartFrequencia.data.labels = dados.weeklyAttendance.labels;
+                    instanciaChartFrequencia.data.datasets[0].data = dados.weeklyAttendance.expected;
+                    instanciaChartFrequencia.data.datasets[1].data = dados.weeklyAttendance.present;
+                    instanciaChartFrequencia.update();
+                } else {
+                    instanciaChartFrequencia = new Chart(ctxFrequencia, {
+                        type: 'bar',
+                        data: {
+                            labels: dados.weeklyAttendance.labels,
+                            datasets: [
+                                {
+                                    label: 'Alunos Esperados',
+                                    data: dados.weeklyAttendance.expected,
+                                    backgroundColor: '#457b9d',
+                                    borderRadius: 6
+                                },
+                                {
+                                    label: 'Alunos Presentes',
+                                    data: dados.weeklyAttendance.present,
+                                    backgroundColor: '#e63946',
+                                    borderRadius: 6
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: true, position: 'bottom' },
+                                tooltip: { mode: 'index', intersect: false }
+                            },
+                            scales: { y: { beginAtZero: true } }
+                        }
+                    });
+                }
+            }
+
+            const listaAusenciasEl = document.querySelector('.lista-ausencias');
+            if (listaAusenciasEl) {
+                if (!dados.absences.length) {
+                    const emptyItem = document.createElement('li');
+                    emptyItem.className = 'ausencia-item';
+                    emptyItem.textContent = 'Nenhuma ausência crítica registrada neste mês.';
+                    listaAusenciasEl.replaceChildren(emptyItem);
+                } else {
+                    const items = dados.absences.map(aluno => {
+                        const item = document.createElement('li');
+                        item.className = 'ausencia-item';
+                        const info = document.createElement('div');
+                        info.className = 'aluno-info';
+                        const name = document.createElement('span');
+                        name.className = 'aluno-nome';
+                        name.textContent = aluno.studentName;
+                        const plan = document.createElement('span');
+                        plan.className = 'aluno-plano';
+                        plan.textContent = aluno.planName;
+                        info.append(name, plan);
+
+                        const absences = document.createElement('div');
+                        absences.className = 'aluno-faltas';
+                        const count = document.createElement('span');
+                        count.className = 'faltas-num';
+                        count.textContent = `${aluno.count} faltas`;
+                        const period = document.createElement('span');
+                        period.className = 'faltas-mes';
+                        period.textContent = 'neste mês';
+                        absences.append(count, period);
+                        item.append(info, absences);
+                        return item;
+                    });
+                    listaAusenciasEl.replaceChildren(...items);
+                }
+            }
+        } catch (error) {
+            console.error('Falha ao carregar os relatórios administrativos.', error);
+            const message = document.getElementById('admin-message');
+            if (message) {
+                message.textContent = error.message;
+                message.dataset.type = 'error';
+                message.hidden = false;
+            }
+        } finally {
+            carregandoRelatorios = false;
         }
     }
+    window.carregarRelatorios = carregarRelatorios;
 
     // --- 3. Função de Navegação entre Seções ---
     function ativarSecao(sectionId) {
