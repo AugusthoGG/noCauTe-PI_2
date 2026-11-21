@@ -1203,6 +1203,191 @@ app.delete("/api/admin/students/:studentId", requireAuth, requireAdmin, async (r
   return res.status(204).end();
 });
 
+// Opções para lançar mensalidades: aluno ativo, matrícula ativa e valor do plano contratado.
+app.get("/api/admin/payments/options", requireAuth, requireAdmin, async (_req, res) => {
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para lançar pagamentos." });
+  }
+
+  const [{ data: memberships, error: membershipsError }, { data: profiles, error: profilesError }] = await Promise.all([
+    adminClient.from("memberships")
+      .select("id, student_id, price_at_purchase, plan:membership_plans(name)")
+      .eq("status", "ativa")
+      .order("starts_on", { ascending: false }),
+    adminClient.from("profiles")
+      .select("id, full_name")
+      .eq("role", "aluno")
+      .eq("status", "ativo")
+      .order("full_name")
+  ]);
+
+  if (membershipsError || profilesError) {
+    console.error("Falha ao carregar opções de pagamentos:", membershipsError?.message || profilesError?.message);
+    return res.status(503).json({ error: "Não foi possível carregar alunos e mensalidades." });
+  }
+
+  const membershipByStudent = new Map(memberships.map(membership => [membership.student_id, membership]));
+  const profileById = new Map(profiles.map(profile => [profile.id, profile]));
+  const students = [...membershipByStudent].flatMap(([studentId, membership]) => {
+    const profile = profileById.get(studentId);
+    if (!profile) return [];
+    const plan = Array.isArray(membership.plan) ? membership.plan[0] : membership.plan;
+    return [{
+      id: studentId,
+      fullName: profile.full_name,
+      membershipId: membership.id,
+      planName: plan?.name || "Plano ativo",
+      amount: membership.price_at_purchase
+    }];
+  });
+
+  return res.json({ students });
+});
+
+// Lista lançamentos financeiros e calcula atrasados pela data de vencimento.
+app.get("/api/admin/payments", requireAuth, requireAdmin, async (_req, res) => {
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para acompanhar pagamentos." });
+  }
+
+  const [{ data: payments, error: paymentsError }, { data: profiles, error: profilesError }, { data: memberships, error: membershipsError }] = await Promise.all([
+    adminClient.from("payments")
+      .select("id, membership_id, student_id, amount, due_on, paid_at, method, status, notes, created_at")
+      .order("due_on", { ascending: false })
+      .limit(500),
+    adminClient.from("profiles")
+      .select("id, full_name")
+      .eq("role", "aluno"),
+    adminClient.from("memberships")
+      .select("id, plan:membership_plans(name)")
+  ]);
+
+  if (paymentsError || profilesError || membershipsError) {
+    console.error("Falha ao listar pagamentos:", paymentsError?.message || profilesError?.message || membershipsError?.message);
+    return res.status(503).json({ error: "Não foi possível carregar os pagamentos." });
+  }
+
+  const profileById = new Map(profiles.map(profile => [profile.id, profile]));
+  const planByMembership = new Map(memberships.map(membership => {
+    const plan = Array.isArray(membership.plan) ? membership.plan[0] : membership.plan;
+    return [membership.id, plan?.name || "Plano"];
+  }));
+  const today = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const dateParts = Object.fromEntries(today.map(part => [part.type, part.value]));
+  const todayKey = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+
+  return res.json({
+    payments: payments.map(payment => {
+      const effectiveStatus = payment.status === "pendente" && payment.due_on < todayKey
+        ? "atrasado"
+        : payment.status;
+      return {
+        ...payment,
+        effectiveStatus,
+        studentName: profileById.get(payment.student_id)?.full_name || "Aluno",
+        planName: planByMembership.get(payment.membership_id) || "Plano"
+      };
+    })
+  });
+});
+
+// Cadastra uma cobrança manual; valor e matrícula são conferidos no servidor.
+app.post("/api/admin/payments", requireAuth, requireAdmin, async (req, res) => {
+  const { studentId, dueOn, status = "pendente", method, notes } = req.body || {};
+  if (typeof studentId !== "string" || !studentId.trim() ||
+      typeof dueOn !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dueOn) ||
+      !["pendente", "pago", "atrasado"].includes(status) ||
+      (method !== undefined && method !== null && !["pix", "cartao", "dinheiro", "transferencia", "outro"].includes(method)) ||
+      (notes !== undefined && notes !== null && typeof notes !== "string")) {
+    return res.status(400).json({ error: "Informe o aluno, a data de vencimento e uma situação válida." });
+  }
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para lançar pagamentos." });
+  }
+
+  const { data: membership, error: membershipError } = await adminClient.from("memberships")
+    .select("id, student_id, price_at_purchase")
+    .eq("student_id", studentId)
+    .eq("status", "ativa")
+    .maybeSingle();
+  if (membershipError) {
+    console.error("Falha ao validar matrícula para pagamento:", membershipError.message);
+    return res.status(503).json({ error: "Não foi possível validar a matrícula do aluno." });
+  }
+  if (!membership) return res.status(404).json({ error: "Aluno sem matrícula ativa encontrada." });
+
+  const { data: existing, error: existingError } = await adminClient.from("payments")
+    .select("id")
+    .eq("membership_id", membership.id)
+    .eq("due_on", dueOn)
+    .in("status", ["pendente", "pago", "atrasado"])
+    .maybeSingle();
+  if (existingError) {
+    console.error("Falha ao verificar cobrança duplicada:", existingError.message);
+    return res.status(503).json({ error: "Não foi possível verificar cobranças existentes." });
+  }
+  if (existing) return res.status(409).json({ error: "Já existe um lançamento para este aluno nesta data." });
+
+  const { data, error } = await adminClient.from("payments").insert({
+    membership_id: membership.id,
+    student_id: studentId,
+    amount: membership.price_at_purchase,
+    due_on: dueOn,
+    paid_at: status === "pago" ? new Date().toISOString() : null,
+    method: method || null,
+    status,
+    notes: notes?.trim() || null
+  }).select("id, membership_id, student_id, amount, due_on, paid_at, method, status, notes, created_at").single();
+
+  if (error) {
+    console.error("Falha ao lançar pagamento:", error.message);
+    return res.status(503).json({ error: "Não foi possível lançar este pagamento." });
+  }
+  return res.status(201).json({
+    payment: data,
+    message: "Lançamento financeiro criado com sucesso."
+  });
+});
+
+// Atualiza apenas a situação do lançamento, mantendo histórico e valor.
+app.patch("/api/admin/payments/:paymentId/status", requireAuth, requireAdmin, async (req, res) => {
+  const paymentId = typeof req.params.paymentId === "string" ? req.params.paymentId.trim() : "";
+  const status = req.body?.status;
+  if (!paymentId || !["pendente", "pago", "atrasado", "cancelado"].includes(status)) {
+    return res.status(400).json({ error: "Informe um pagamento e uma situação válida." });
+  }
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para atualizar pagamentos." });
+  }
+
+  const update = {
+    status,
+    paid_at: status === "pago" ? new Date().toISOString() : null
+  };
+  const { data, error } = await adminClient.from("payments")
+    .update(update)
+    .eq("id", paymentId)
+    .select("id, status, paid_at")
+    .maybeSingle();
+  if (error) {
+    console.error("Falha ao atualizar situação do pagamento:", error.message);
+    return res.status(503).json({ error: "Não foi possível atualizar o pagamento." });
+  }
+  if (!data) return res.status(404).json({ error: "Pagamento não encontrado." });
+  return res.json({ payment: data, message: "Situação do pagamento atualizada." });
+});
+
 // Carrega alunos sem plano ativo e o catálogo de planos para o vínculo administrativo.
 app.get("/api/admin/memberships/options", requireAuth, requireAdmin, async (_req, res) => {
   const adminClient = createAdminClient();

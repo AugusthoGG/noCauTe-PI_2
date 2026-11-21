@@ -42,6 +42,10 @@
                 <img src="img/svg/icon-alunos.png" alt="" class="icon-sidebar">
                 Alunos
             </a>
+            <a class="nav-item" href="#pagamentos-admin" data-target="view-pagamentos">
+                <img src="img/svg/icon-plano.png" alt="" class="icon-sidebar">
+                Pagamentos
+            </a>
             <a class="nav-item" href="#relatorios-admin" data-target="view-relatorios">
                 <img src="img/svg/icon-relatorio.png" alt="" class="icon-sidebar">
                 Relatórios
@@ -292,6 +296,74 @@
                             <tr>
                                 <td colspan="6">Carregando planos dos alunos...</td>
                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+
+        <section id="pagamentos-admin" class="admin-section admin-view">
+            <header class="view-header">
+                <p>Controle financeiro</p>
+                <h1>Pagamentos</h1>
+                <p>Lance mensalidades, acompanhe vencimentos e altere a situação manualmente.</p>
+            </header>
+
+            <form id="payment-form" class="admin-card admin-form invite-form">
+                <h2>Lançar mensalidade</h2>
+                <label for="payment-student">Aluno</label>
+                <select id="payment-student" required>
+                    <option value="">Carregando alunos...</option>
+                </select>
+                <label for="payment-plan">Plano ativo</label>
+                <input id="payment-plan" type="text" readonly placeholder="Selecione um aluno">
+                <label for="payment-amount">Valor</label>
+                <input id="payment-amount" type="text" readonly placeholder="R$ 0,00">
+                <label for="payment-due">Data de vencimento</label>
+                <input id="payment-due" type="date" required>
+                <label for="payment-status">Situação</label>
+                <select id="payment-status" required>
+                    <option value="pendente">Pendente</option>
+                    <option value="pago">Pago</option>
+                    <option value="atrasado">Atrasado</option>
+                </select>
+                <label for="payment-method">Método registrado</label>
+                <select id="payment-method">
+                    <option value="">Não informado</option>
+                    <option value="pix">PIX</option>
+                    <option value="cartao">Cartão</option>
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="transferencia">Transferência</option>
+                    <option value="outro">Outro</option>
+                </select>
+                <label for="payment-notes">Observação</label>
+                <input id="payment-notes" type="text" maxlength="200" placeholder="Opcional">
+                <button id="payment-submit" class="btn btn-primary" type="submit">Lançar pagamento</button>
+            </form>
+
+            <section class="admin-card">
+                <div class="admin-list-heading">
+                    <div>
+                        <h2>Lançamentos registrados</h2>
+                        <p>Atrasados são calculados pela data de vencimento.</p>
+                    </div>
+                    <button id="refresh-payments" class="btn btn-outline" type="button">Atualizar lista</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ALUNO</th>
+                                <th>PLANO</th>
+                                <th>VALOR</th>
+                                <th>VENCIMENTO</th>
+                                <th>SITUAÇÃO</th>
+                                <th>MÉTODO</th>
+                                <th>AÇÃO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payments-body">
+                            <tr><td colspan="7">Carregando pagamentos...</td></tr>
                         </tbody>
                     </table>
                 </div>

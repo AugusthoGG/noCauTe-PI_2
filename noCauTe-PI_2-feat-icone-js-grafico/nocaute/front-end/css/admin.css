@@ -166,6 +166,25 @@
     padding: 0.4rem 0.55rem;
 }
 
+.payment-status-select {
+    min-width: 130px;
+    min-height: 38px;
+    padding: 0.4rem 0.55rem;
+    border: 1px solid #c9c9c9;
+    border-radius: 6px;
+    background: #fff;
+    color: #242424;
+    font: inherit;
+}
+
+.payment-status-select option[value="pago"] {
+    color: #166534;
+}
+
+.payment-status-select option[value="atrasado"] {
+    color: #b91c1c;
+}
+
 .invite-form {
     max-width: 620px;
     align-items: center;
@@ -282,4 +301,3 @@
     font-size: 0.75rem;
     color: #6b7280;
 }
-

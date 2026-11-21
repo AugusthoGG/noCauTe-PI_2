@@ -18,6 +18,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const membershipStudentSelect = document.getElementById('membership-student');
     const membershipPlanSelect = document.getElementById('membership-plan');
     const membershipSubmit = document.getElementById('membership-submit');
+    const paymentForm = document.getElementById('payment-form');
+    const paymentStudentSelect = document.getElementById('payment-student');
+    const paymentPlanInput = document.getElementById('payment-plan');
+    const paymentAmountInput = document.getElementById('payment-amount');
+    const paymentStatusSelect = document.getElementById('payment-status');
+    const paymentMethodSelect = document.getElementById('payment-method');
+    const paymentDueInput = document.getElementById('payment-due');
+    const paymentNotesInput = document.getElementById('payment-notes');
+    const paymentsBody = document.getElementById('payments-body');
+    let paymentOptions = [];
     const views = [...document.querySelectorAll('.view-section')];
     let catalog = { modalities: [], classes: [], instructors: [] };
     // --- Controle de Navegação entre Seções ---
@@ -362,6 +372,98 @@ document.addEventListener('DOMContentLoaded', () => {
         membershipSubmit.disabled = !studentsWithoutActivePlan.length || !plans.length;
     }
 
+    function updatePaymentSelection() {
+        const selected = paymentOptions.find(student => student.id === paymentStudentSelect.value);
+        paymentPlanInput.value = selected?.planName || '';
+        paymentAmountInput.value = selected ? formatCurrency(selected.amount) : '';
+    }
+
+    async function loadPaymentOptions() {
+        const { students } = await apiRequest('/api/admin/payments/options');
+        paymentOptions = students;
+        fillSelect(
+            paymentStudentSelect,
+            students,
+            students.length ? 'Selecione um aluno' : 'Nenhum aluno com plano ativo',
+            student => `${student.fullName || 'Aluno'}${student.planName ? ` · ${student.planName}` : ''}`
+        );
+        updatePaymentSelection();
+    }
+
+    function paymentStatusLabel(status) {
+        return {
+            pendente: 'Pendente',
+            pago: 'Pago',
+            atrasado: 'Atrasado',
+            cancelado: 'Cancelado',
+            estornado: 'Estornado'
+        }[status] || status;
+    }
+
+    function renderPayments(payments) {
+        if (!payments.length) {
+            addEmptyRow(paymentsBody, 7, 'Nenhum pagamento lançado.');
+            return;
+        }
+        const rows = payments.map(payment => {
+            const row = document.createElement('tr');
+            addCell(row, payment.studentName);
+            addCell(row, payment.planName);
+            addCell(row, formatCurrency(payment.amount));
+            addCell(row, formatDate(`${payment.due_on}T12:00:00`, { dateStyle: 'short' }));
+            const statusCell = document.createElement('td');
+            const statusSelect = document.createElement('select');
+            statusSelect.className = 'payment-status-select';
+            statusSelect.setAttribute('aria-label', `Situação do pagamento de ${payment.studentName}`);
+            ['pendente', 'pago', 'atrasado', 'cancelado'].forEach(status => {
+                const option = document.createElement('option');
+                option.value = status;
+                option.textContent = paymentStatusLabel(status);
+                statusSelect.append(option);
+            });
+            statusSelect.value = payment.effectiveStatus || payment.status;
+            statusSelect.dataset.savedValue = statusSelect.value;
+            statusCell.append(statusSelect);
+            row.append(statusCell);
+            addCell(row, payment.method || 'Não informado');
+            const actionCell = document.createElement('td');
+            const saveButton = document.createElement('button');
+            saveButton.type = 'button';
+            saveButton.className = 'btn btn-outline';
+            saveButton.textContent = 'Salvar';
+            saveButton.disabled = true;
+            statusSelect.addEventListener('change', () => {
+                saveButton.disabled = statusSelect.value === statusSelect.dataset.savedValue;
+            });
+            saveButton.addEventListener('click', () => updatePaymentStatus(payment.id, statusSelect, saveButton));
+            actionCell.append(saveButton);
+            row.append(actionCell);
+            return row;
+        });
+        paymentsBody.replaceChildren(...rows);
+    }
+
+    async function updatePaymentStatus(paymentId, statusSelect, saveButton) {
+        saveButton.disabled = true;
+        try {
+            const result = await apiRequest(`/api/admin/payments/${encodeURIComponent(paymentId)}/status`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status: statusSelect.value })
+            });
+            statusSelect.dataset.savedValue = statusSelect.value;
+            showMessage(result.message);
+            await loadPayments();
+        } catch (error) {
+            statusSelect.value = statusSelect.dataset.savedValue;
+            showMessage(error.message, 'error');
+        }
+    }
+
+    async function loadPayments() {
+        const { payments } = await apiRequest('/api/admin/payments');
+        renderPayments(payments);
+    }
+
     function renderMemberships(memberships) {
         if (!memberships.length) {
             addEmptyRow(membershipsBody, 6, 'Nenhum plano foi atribuído a alunos ainda.');
@@ -503,6 +605,36 @@ document.addEventListener('DOMContentLoaded', () => {
             loadDashboard().catch(error => showMessage(error.message, 'error'));
         });
     });
+    paymentStudentSelect.addEventListener('change', updatePaymentSelection);
+
+    paymentForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const submit = paymentForm.querySelector('button[type="submit"]');
+        submit.disabled = true;
+        try {
+            const result = await apiRequest('/api/admin/payments', {
+                method: 'POST',
+                body: JSON.stringify({
+                    studentId: paymentStudentSelect.value,
+                    dueOn: paymentDueInput.value,
+                    status: paymentStatusSelect.value,
+                    method: paymentMethodSelect.value || null,
+                    notes: paymentNotesInput.value.trim()
+                })
+            });
+            showMessage(result.message);
+            paymentForm.reset();
+            paymentStatusSelect.value = 'pendente';
+            paymentMethodSelect.value = '';
+            updatePaymentSelection();
+            await Promise.all([loadPaymentOptions(), loadPayments()]);
+        } catch (error) {
+            showMessage(error.message, 'error');
+        } finally {
+            submit.disabled = false;
+        }
+    });
+
     document.getElementById('refresh-instructors').addEventListener('click', () => {
         loadInstructors().catch(error => showMessage(error.message, 'error'));
     });
@@ -513,6 +645,10 @@ document.addEventListener('DOMContentLoaded', () => {
         Promise.all([loadMembershipOptions(), loadMemberships()])
             .catch(error => showMessage(error.message, 'error'));
     });
+    document.getElementById('refresh-payments').addEventListener('click', () => {
+        Promise.all([loadPaymentOptions(), loadPayments()])
+            .catch(error => showMessage(error.message, 'error'));
+    });
 
     document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(link => {
         link.addEventListener('click', () => {
@@ -521,7 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Atualiza tudo ao abrir e renova os dados de tempos em tempos.
-    Promise.all([loadCatalog(), loadMembershipOptions(), loadMemberships(), loadStudents()])
+    Promise.all([loadCatalog(), loadMembershipOptions(), loadMemberships(), loadStudents(), loadPaymentOptions(), loadPayments()])
         .then(() => Promise.all([loadDashboard(), loadInstructors()]))
         .catch(error => {
             console.error('Falha ao carregar o painel administrativo.', error);
