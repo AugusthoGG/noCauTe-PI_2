@@ -1,0 +1,81 @@
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>noCauTe - Centro de Treinamento</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="img/icone-nocaute.png" type="image/x-icon">
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-header">
+            <h2><img src="img/Logo noCauTe em amarelo e grafite.png" alt="" style="width: 200px;"></h2>
+            <p>CENTRO DE TREINAMENTO</p>
+        </div>
+        
+        <!-- Seleção do Perfil (Aluno / Instrutor) -->
+        <div class="login-tabs profile-tabs" aria-label="Tipo de perfil">
+            <button class="tab-btn active" type="button" id="btnPerfilAluno" data-type="aluno">Aluno</button>
+            <button class="tab-btn" type="button" id="btnPerfilInstrutor" data-type="instrutor">Instrutor</button>
+            <!-- A aba só escolhe a porta; quem confere se a chave serve é o servidor. -->
+            <button class="tab-btn" type="button" id="btnPerfilAdmin" data-type="admin">Admin</button>
+        </div>
+        <!-- Recados de login e confirmação aparecem aqui, sem caça ao tesouro. -->
+        <p id="auth-message" class="help-text" role="status" aria-live="polite" hidden></p>
+        <button type="button" id="btnResendConfirmation" class="link-btn" hidden>Reenviar e-mail de confirmação</button>
+
+        <!-- Formulário de Login -->
+        <form id="loginForm" class="login-form">
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="aluno@nocaute.com" required>
+            </div>
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" placeholder="123456" required>
+            </div>
+            <button type="submit" id="btnSubmitLogin" class="btn btn-primary btn-block">Entrar como aluno</button>
+            
+            <!-- Botão de alternância no lugar do texto de protótipo -->
+            <p class="help-text" id="register-prompt">
+                Não tem uma conta? <button type="button" id="btnGoToRegister" class="link-btn">Criar conta</button>
+            </p>
+        </form>
+
+        <!-- Formulário de Cadastro (Oculto inicialmente) -->
+        <form id="registerForm" class="login-form hidden">
+            <div class="form-group">
+                <label for="reg-nome">Nome Completo</label>
+                <input type="text" id="reg-nome" placeholder="Seu nome completo" required>
+            </div>
+            <div class="form-group">
+                <label for="reg-email">E-mail</label>
+                <input type="email" id="reg-email" placeholder="seuemail@nocaute.com" required>
+            </div>
+            <div class="form-group">
+                <label for="reg-senha">Senha</label>
+                <!-- Evita senha curtinha que nem um cadeado de brinquedo. -->
+                <input type="password" id="reg-senha" placeholder="Crie uma senha" minlength="6" required>
+            </div>
+            <div class="form-group">
+                <label for="reg-confirmar">Confirmar Senha</label>
+                <input type="password" id="reg-confirmar" placeholder="Confirme sua senha" required>
+            </div>
+            <button type="submit" id="btnSubmitRegister" class="btn btn-primary btn-block">Criar conta como aluno</button>
+
+            <!-- Botão para voltar ao Login -->
+            <p class="help-text">
+                Já tem uma conta? <button type="button" id="btnGoToLogin" class="link-btn">Fazer login</button>
+            </p>
+        </form>
+
+        <a href="index.html" class="back-link">&larr; Voltar ao site</a>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
