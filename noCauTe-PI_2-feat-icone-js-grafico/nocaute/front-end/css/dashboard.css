@@ -508,8 +508,8 @@
 /*ABA INÍCIO*/
 
 .btn-go-chamada{
-    padding: 0.2rem 0.5rem; 
-    font-size: 0.8rem; 
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
     float: right;
     color: white !important;
 }
@@ -662,7 +662,7 @@
     gap: 16px;
     width: 100%;
     /* Caso ainda não tenha definido a fonte globalmente, garanta que a Archivo seja usada */
-    font-family: 'Archivo', sans-serif; 
+    font-family: 'Archivo', sans-serif;
 }
 
 /* Estilo individual de cada painel */
@@ -1050,6 +1050,17 @@
 .dashboard-body .btn-outline:hover:not(:disabled) {
     border-color: #111111;
     background: #111111;
+    color: #ffffff;
+}
+
+.dashboard-body .btn-danger {
+    border-color: #dc2626;
+    color: #b91c1c;
+}
+
+.dashboard-body .btn-danger:hover:not(:disabled) {
+    border-color: #dc2626;
+    background: #dc2626;
     color: #ffffff;
 }
 

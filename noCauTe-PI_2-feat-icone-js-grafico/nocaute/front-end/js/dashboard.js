@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // O painel do aluno consulta horários e reservas reais, sem inventar treino.
-    const apiBaseUrl = 'https://nocaute-pi-2.onrender.com';
+    const localHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const apiBaseUrl = localHost ? 'http://127.0.0.1:3001' : 'https://nocaute-pi-2.onrender.com';
     const navItems = [...document.querySelectorAll('.nav-item[data-target]')];
     const views = [...document.querySelectorAll('.view-section')];
     const toastRegion = document.createElement('div');

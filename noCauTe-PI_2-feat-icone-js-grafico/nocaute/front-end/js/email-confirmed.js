@@ -1,6 +1,7 @@
 (() => {
     // O Supabase devolve os dados do link; este script cuida do resto da novela.
-    const apiBaseUrl = 'https://nocaute-pi-2.onrender.com';
+    const localHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const apiBaseUrl = localHost ? 'http://127.0.0.1:3001' : 'https://nocaute-pi-2.onrender.com';
     const message = document.getElementById('confirmation-message');
     const link = document.getElementById('confirmation-link');
     const hash = new URLSearchParams(window.location.hash.slice(1));

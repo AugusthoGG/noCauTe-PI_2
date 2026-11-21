@@ -212,7 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // O servidor confere o perfil de verdade; escolher "Admin" aqui não dá superpoder.
     let currentProfile = 'aluno';
     const authMessage = document.getElementById('auth-message');
-    const apiBaseUrl = 'https://nocaute-pi-2.onrender.com';
+    const localHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const apiBaseUrl = localHost ? 'http://127.0.0.1:3001' : 'https://nocaute-pi-2.onrender.com';
 
     // Recados visíveis na tela, porque adivinhar o erro é uma péssima brincadeira.
     function showAuthMessage(message, type = 'error') {
@@ -285,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 registerForm.style.display = 'none';
                 if (loginForm) loginForm.style.display = 'block';
             }
-            
+
             if (currentProfile === 'aluno') {
                 if (emailInput) emailInput.placeholder = 'aluno@nocaute.com';
                 if (btnSubmitLogin) btnSubmitLogin.textContent = 'Entrar como aluno';

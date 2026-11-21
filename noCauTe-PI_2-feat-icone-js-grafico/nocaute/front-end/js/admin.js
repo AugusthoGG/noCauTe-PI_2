@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // O painel carrega tudo da API; nenhum número vem de chute ou planilha fantasma.
-    const apiBaseUrl = 'https://nocaute-pi-2.onrender.com';
+    const localHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const apiBaseUrl = localHost ? 'http://127.0.0.1:3001' : 'https://nocaute-pi-2.onrender.com';
     const message = document.getElementById('admin-message');
     const inviteForm = document.getElementById('invite-form');
     const classForm = document.getElementById('class-form');
@@ -33,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         navItems.forEach(item => {
             const isSelected = item.getAttribute('href') === sectionId;
             item.classList.toggle('active', isSelected);
-            
+
             if (isSelected) {
                 item.setAttribute('aria-current', 'page');
             } else {
@@ -46,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         item.addEventListener('click', (event) => {
             event.preventDefault();
             const targetId = item.getAttribute('href');
-            
+
             ativarSecao(targetId);
             history.pushState(null, '', targetId);
             if (targetId === '#agenda-admin') {

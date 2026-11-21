@@ -1,6 +1,7 @@
 (() => {
     // Descobre qual painel abriu e pega os passes guardados neste navegador.
-    const apiBaseUrl = 'https://nocaute-pi-2.onrender.com';
+    const localHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const apiBaseUrl = localHost ? 'http://127.0.0.1:3001' : 'https://nocaute-pi-2.onrender.com';
     // Cloudflare Pages pode servir os arquivos HTML com URLs limpas (/admin).
     // Reconhece os dois formatos para não classificar o painel admin como aluno.
     const pagePath = window.location.pathname.replace(/\/+$/, '');
