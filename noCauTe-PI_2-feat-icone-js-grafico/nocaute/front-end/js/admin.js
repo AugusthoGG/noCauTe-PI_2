@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sessionForm = document.getElementById('session-form');
     const membershipForm = document.getElementById('membership-form');
     const instructorsBody = document.getElementById('instructors-body');
+    const studentsBody = document.getElementById('students-body');
     const sessionsBodies = [...document.querySelectorAll('.sessions-body')];
     const reservationsBody = document.getElementById('reservations-body');
     const membershipsBody = document.getElementById('memberships-body');
@@ -233,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadInstructors() {
         const { instructors } = await apiRequest('/api/admin/instructors');
         if (!instructors.length) {
-            addEmptyRow(instructorsBody, 4, 'Nenhum instrutor cadastrado.');
+            addEmptyRow(instructorsBody, 5, 'Nenhum instrutor cadastrado.');
             return;
         }
         const rows = instructors.map(instructor => {
@@ -242,9 +243,90 @@ document.addEventListener('DOMContentLoaded', () => {
             addCell(row, instructor.email);
             addCell(row, instructor.status);
             addCell(row, formatDate(instructor.createdAt, { dateStyle: 'short' }));
+            const actionCell = document.createElement('td');
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = instructor.status === 'ativo' ? 'btn btn-outline btn-danger' : 'btn btn-outline';
+            button.textContent = instructor.status === 'ativo' ? 'Desativar' : 'Reativar';
+            button.addEventListener('click', () => changeInstructorStatus(instructor, button));
+            actionCell.append(button);
+            row.append(actionCell);
             return row;
         });
         instructorsBody.replaceChildren(...rows);
+    }
+
+    async function changeInstructorStatus(instructor, button) {
+        const deactivate = instructor.status === 'ativo';
+        const confirmed = deactivate
+            ? window.confirm(`Desativar o instrutor ${instructor.fullName || 'selecionado'}? As aulas futuras ficarão sem instrutor.`)
+            : true;
+        if (!confirmed) return;
+
+        button.disabled = true;
+        try {
+            const result = deactivate
+                ? await apiRequest(`/api/admin/instructors/${encodeURIComponent(instructor.id)}`, { method: 'DELETE' })
+                : await apiRequest(`/api/admin/instructors/${encodeURIComponent(instructor.id)}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'ativo' })
+                });
+            showMessage(result?.message || 'Status do instrutor alterado.');
+            await Promise.all([loadInstructors(), loadCatalog(), loadDashboard()]);
+        } catch (error) {
+            showMessage(error.message, 'error');
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function loadStudents() {
+        const { students } = await apiRequest('/api/admin/students');
+        if (!students.length) {
+            addEmptyRow(studentsBody, 5, 'Nenhum aluno cadastrado.');
+            return;
+        }
+        const rows = students.map(student => {
+            const row = document.createElement('tr');
+            addCell(row, student.fullName);
+            addCell(row, student.email);
+            addCell(row, student.status);
+            addCell(row, formatDate(student.createdAt, { dateStyle: 'short' }));
+            const actionCell = document.createElement('td');
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = student.status === 'ativo' ? 'btn btn-outline btn-danger' : 'btn btn-outline';
+            button.textContent = student.status === 'ativo' ? 'Desativar' : 'Reativar';
+            button.addEventListener('click', () => changeStudentStatus(student, button));
+            actionCell.append(button);
+            row.append(actionCell);
+            return row;
+        });
+        studentsBody.replaceChildren(...rows);
+    }
+
+    async function changeStudentStatus(student, button) {
+        const deactivate = student.status === 'ativo';
+        const confirmed = deactivate
+            ? window.confirm(`Desativar o aluno ${student.fullName || 'selecionado'}? O plano ativo será encerrado e reservas futuras serão canceladas.`)
+            : true;
+        if (!confirmed) return;
+
+        button.disabled = true;
+        try {
+            const result = deactivate
+                ? await apiRequest(`/api/admin/students/${encodeURIComponent(student.id)}`, { method: 'DELETE' })
+                : await apiRequest(`/api/admin/students/${encodeURIComponent(student.id)}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'ativo' })
+                });
+            showMessage(result?.message || 'Status do aluno alterado.');
+            await Promise.all([loadStudents(), loadMembershipOptions(), loadMemberships(), loadDashboard()]);
+        } catch (error) {
+            showMessage(error.message, 'error');
+        } finally {
+            button.disabled = false;
+        }
     }
 
     function fillSelect(select, items, placeholder, getLabel) {
@@ -423,6 +505,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('refresh-instructors').addEventListener('click', () => {
         loadInstructors().catch(error => showMessage(error.message, 'error'));
     });
+    document.getElementById('refresh-students').addEventListener('click', () => {
+        loadStudents().catch(error => showMessage(error.message, 'error'));
+    });
     document.getElementById('refresh-memberships').addEventListener('click', () => {
         Promise.all([loadMembershipOptions(), loadMemberships()])
             .catch(error => showMessage(error.message, 'error'));
@@ -435,14 +520,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Atualiza tudo ao abrir e renova os dados de tempos em tempos.
-    Promise.all([loadCatalog(), loadMembershipOptions(), loadMemberships()])
+    Promise.all([loadCatalog(), loadMembershipOptions(), loadMemberships(), loadStudents()])
         .then(() => Promise.all([loadDashboard(), loadInstructors()]))
         .catch(error => {
             console.error('Falha ao carregar o painel administrativo.', error);
             showMessage(error.message, 'error');
-            addEmptyRow(sessionsBody, 4, 'Não foi possível carregar as aulas.');
+            sessionsBodies.forEach(body => addEmptyRow(body, 4, 'Não foi possível carregar as aulas.'));
             addEmptyRow(reservationsBody, 4, 'Não foi possível carregar as reservas.');
-            addEmptyRow(instructorsBody, 4, 'Não foi possível carregar os instrutores.');
+            addEmptyRow(instructorsBody, 5, 'Não foi possível carregar os instrutores.');
+            addEmptyRow(studentsBody, 5, 'Não foi possível carregar os alunos.');
             addEmptyRow(membershipsBody, 6, 'Não foi possível carregar os planos dos alunos.');
         });
 

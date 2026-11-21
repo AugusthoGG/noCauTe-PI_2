@@ -1049,6 +1049,160 @@ app.get("/api/admin/catalog", requireAuth, requireAdmin, async (_req, res) => {
   return res.json({ modalities, classes, instructors });
 });
 
+// Lista os alunos cadastrados para gerenciamento administrativo.
+app.get("/api/admin/students", requireAuth, requireAdmin, async (_req, res) => {
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para gerenciar alunos." });
+  }
+
+  const [{ data: profiles, error: profilesError }, { data: users, error: usersError }] = await Promise.all([
+    adminClient.from("profiles")
+      .select("id, full_name, status, created_at")
+      .eq("role", "aluno")
+      .order("created_at", { ascending: false }),
+    adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 })
+  ]);
+  if (profilesError || usersError) {
+    console.error("Falha ao listar alunos:", profilesError?.message || usersError?.message);
+    return res.status(503).json({ error: "Não foi possível carregar a lista de alunos." });
+  }
+
+  const emailById = new Map(users.users.map(user => [user.id, user.email || ""]));
+  return res.json({
+    students: profiles.map(profile => ({
+      id: profile.id,
+      fullName: profile.full_name,
+      email: emailById.get(profile.id) || "",
+      status: profile.status,
+      createdAt: profile.created_at
+    }))
+  });
+});
+
+// Desativa ou reativa um aluno sem apagar seu histórico.
+app.patch("/api/admin/students/:studentId/status", requireAuth, requireAdmin, async (req, res) => {
+  const studentId = typeof req.params.studentId === "string" ? req.params.studentId.trim() : "";
+  const status = req.body?.status;
+  if (!studentId || !["ativo", "inativo"].includes(status)) {
+    return res.status(400).json({ error: "Informe um aluno e um status válido." });
+  }
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para gerenciar alunos." });
+  }
+
+  const { data: student, error: studentError } = await adminClient.from("profiles")
+    .select("id")
+    .eq("id", studentId)
+    .eq("role", "aluno")
+    .maybeSingle();
+  if (studentError) {
+    console.error("Falha ao validar aluno para alteração de status:", studentError.message);
+    return res.status(503).json({ error: "Não foi possível validar o aluno." });
+  }
+  if (!student) return res.status(404).json({ error: "Aluno não encontrado." });
+
+  const { error: profileError } = await adminClient.from("profiles")
+    .update({ status })
+    .eq("id", studentId)
+    .eq("role", "aluno");
+  if (profileError) {
+    console.error("Falha ao alterar status do aluno:", profileError.message);
+    return res.status(503).json({ error: "Não foi possível alterar o status do aluno." });
+  }
+
+  if (status === "inativo") {
+    const today = new Date().toISOString().slice(0, 10);
+    const [{ error: membershipsError }, { data: reservations, error: reservationsError }] = await Promise.all([
+      adminClient.from("memberships")
+        .update({ status: "cancelada", ends_on: today })
+        .eq("student_id", studentId)
+        .eq("status", "ativa"),
+      adminClient.from("reservations")
+        .select("id, session:class_sessions(starts_at)")
+        .eq("student_id", studentId)
+        .eq("status", "reservada")
+    ]);
+    if (membershipsError || reservationsError) {
+      console.error("Falha ao encerrar dados do aluno desativado:", membershipsError?.message || reservationsError?.message);
+      return res.status(503).json({ error: "O aluno foi desativado, mas não foi possível encerrar todos os vínculos." });
+    }
+
+    const reservationIds = reservations
+      .filter(reservation => {
+        const session = Array.isArray(reservation.session) ? reservation.session[0] : reservation.session;
+        return session?.starts_at && new Date(session.starts_at) > new Date();
+      })
+      .map(reservation => reservation.id);
+    if (reservationIds.length) {
+      const { error: cancelError } = await adminClient.from("reservations")
+        .update({ status: "cancelada", cancelled_at: new Date().toISOString() })
+        .in("id", reservationIds);
+      if (cancelError) {
+        console.error("Falha ao cancelar reservas do aluno desativado:", cancelError.message);
+        return res.status(503).json({ error: "O aluno foi desativado, mas não foi possível cancelar todas as reservas futuras." });
+      }
+    }
+  }
+
+  return res.json({
+    message: status === "inativo"
+      ? "Aluno desativado. O acesso e os vínculos futuros foram encerrados."
+      : "Aluno reativado."
+  });
+});
+
+// Atalho administrativo para desativar um aluno.
+app.delete("/api/admin/students/:studentId", requireAuth, requireAdmin, async (req, res) => {
+  const studentId = typeof req.params.studentId === "string" ? req.params.studentId.trim() : "";
+  if (!studentId) return res.status(400).json({ error: "Aluno não informado." });
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para desativar alunos." });
+  }
+  const { data: student, error: studentError } = await adminClient.from("profiles")
+    .select("id")
+    .eq("id", studentId)
+    .eq("role", "aluno")
+    .maybeSingle();
+  if (studentError) {
+    console.error("Falha ao validar aluno para desativação:", studentError.message);
+    return res.status(503).json({ error: "Não foi possível validar o aluno." });
+  }
+  if (!student) return res.status(404).json({ error: "Aluno não encontrado." });
+
+  const today = new Date().toISOString().slice(0, 10);
+  const [{ error: profileError }, { error: membershipsError }, { data: reservations, error: reservationsError }] = await Promise.all([
+    adminClient.from("profiles").update({ status: "inativo" }).eq("id", studentId).eq("role", "aluno"),
+    adminClient.from("memberships").update({ status: "cancelada", ends_on: today }).eq("student_id", studentId).eq("status", "ativa"),
+    adminClient.from("reservations").select("id, session:class_sessions(starts_at)").eq("student_id", studentId).eq("status", "reservada")
+  ]);
+  if (profileError || membershipsError || reservationsError) {
+    console.error("Falha ao desativar aluno:", profileError?.message || membershipsError?.message || reservationsError?.message);
+    return res.status(503).json({ error: "Não foi possível desativar o aluno." });
+  }
+
+  const reservationIds = reservations
+    .filter(reservation => {
+      const session = Array.isArray(reservation.session) ? reservation.session[0] : reservation.session;
+      return session?.starts_at && new Date(session.starts_at) > new Date();
+    })
+    .map(reservation => reservation.id);
+  if (reservationIds.length) {
+    const { error: cancelError } = await adminClient.from("reservations")
+      .update({ status: "cancelada", cancelled_at: new Date().toISOString() })
+      .in("id", reservationIds);
+    if (cancelError) {
+      console.error("Falha ao cancelar reservas do aluno desativado:", cancelError.message);
+      return res.status(503).json({ error: "Aluno desativado, mas algumas reservas não puderam ser canceladas." });
+    }
+  }
+  return res.status(204).end();
+});
+
 // Carrega alunos sem plano ativo e o catálogo de planos para o vínculo administrativo.
 app.get("/api/admin/memberships/options", requireAuth, requireAdmin, async (_req, res) => {
   const adminClient = createAdminClient();
@@ -1339,6 +1493,103 @@ app.get("/api/admin/instructors", requireAuth, requireAdmin, async (_req, res) =
       createdAt: profile.created_at
     }))
   });
+});
+
+// Desativa ou reativa um instrutor sem apagar seu histórico.
+app.patch("/api/admin/instructors/:instructorId/status", requireAuth, requireAdmin, async (req, res) => {
+  const instructorId = typeof req.params.instructorId === "string" ? req.params.instructorId.trim() : "";
+  const status = req.body?.status;
+  if (!instructorId || !["ativo", "inativo"].includes(status)) {
+    return res.status(400).json({ error: "Informe um instrutor e um status válido." });
+  }
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Algo deu errado" });
+  }
+
+  const { data: instructor, error: instructorError } = await adminClient.from("profiles")
+    .select("id")
+    .eq("id", instructorId)
+    .eq("role", "instrutor")
+    .maybeSingle();
+  if (instructorError) {
+    console.error("Falha ao validar instrutor para alteração de status:", instructorError.message);
+    return res.status(503).json({ error: "Não foi possível validar o instrutor." });
+  }
+  if (!instructor) return res.status(404).json({ error: "Instrutor não encontrado." });
+
+  let changeError = null;
+  if (status === "ativo") {
+    const { error } = await adminClient.from("profiles")
+      .update({ status })
+      .eq("id", instructorId)
+      .eq("role", "instrutor");
+    changeError = error;
+  } else {
+    const [{ error: profileError }, { error: sessionsError }, { error: schedulesError }] = await Promise.all([
+      adminClient.from("profiles").update({ status }).eq("id", instructorId).eq("role", "instrutor"),
+      adminClient.from("class_sessions")
+        .update({ instructor_id: null })
+        .eq("instructor_id", instructorId)
+        .eq("status", "agendada")
+        .gt("starts_at", new Date().toISOString()),
+      adminClient.from("class_schedules")
+        .update({ instructor_id: null, active: false })
+        .eq("instructor_id", instructorId)
+    ]);
+    changeError = profileError || sessionsError || schedulesError;
+  }
+  if (changeError) {
+    console.error("Falha ao alterar status do instrutor:", changeError.message);
+    return res.status(503).json({ error: "Não foi possível alterar o status do instrutor." });
+  }
+
+  return res.json({
+    message: status === "inativo"
+      ? "Instrutor desativado. Aulas futuras ficaram sem instrutor responsável."
+      : "Instrutor reativado."
+  });
+});
+
+// Atalho administrativo para desativar um instrutor.
+app.delete("/api/admin/instructors/:instructorId", requireAuth, requireAdmin, async (req, res) => {
+  const instructorId = typeof req.params.instructorId === "string" ? req.params.instructorId.trim() : "";
+  if (!instructorId) return res.status(400).json({ error: "Instrutor não informado." });
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para desativar instrutores." });
+  }
+
+  const { data: instructor, error: instructorError } = await adminClient.from("profiles")
+    .select("id")
+    .eq("id", instructorId)
+    .eq("role", "instrutor")
+    .maybeSingle();
+  if (instructorError) {
+    console.error("Falha ao validar instrutor para desativação:", instructorError.message);
+    return res.status(503).json({ error: "Não foi possível validar o instrutor." });
+  }
+  if (!instructor) return res.status(404).json({ error: "Instrutor não encontrado." });
+
+  const [{ error: profileError }, { error: sessionsError }, { error: schedulesError }] = await Promise.all([
+    adminClient.from("profiles").update({ status: "inativo" }).eq("id", instructorId).eq("role", "instrutor"),
+    adminClient.from("class_sessions")
+      .update({ instructor_id: null })
+      .eq("instructor_id", instructorId)
+      .eq("status", "agendada")
+      .gt("starts_at", new Date().toISOString()),
+    adminClient.from("class_schedules")
+      .update({ instructor_id: null, active: false })
+      .eq("instructor_id", instructorId)
+  ]);
+  const changeError = profileError || sessionsError || schedulesError;
+  if (changeError) {
+    console.error("Falha ao desativar instrutor:", changeError.message);
+    return res.status(503).json({ error: "Não foi possível desativar o instrutor." });
+  }
+  return res.status(204).end();
 });
 
 // Convida a pessoa e só então dá a ela o papel de instrutor.
