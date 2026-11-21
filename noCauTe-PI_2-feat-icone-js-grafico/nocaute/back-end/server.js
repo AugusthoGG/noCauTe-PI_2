@@ -1505,7 +1505,7 @@ app.patch("/api/admin/instructors/:instructorId/status", requireAuth, requireAdm
 
   const adminClient = createAdminClient();
   if (!adminClient) {
-    return res.status(503).json({ error: "Algo deu errado" });
+    return res.status(503).json({ error: "Algo deu errado. Tente novamente mais tarde." });
   }
 
   const { data: instructor, error: instructorError } = await adminClient.from("profiles")
