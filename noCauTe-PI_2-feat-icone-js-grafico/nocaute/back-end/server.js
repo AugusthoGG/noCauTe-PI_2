@@ -51,6 +51,26 @@ function publicRole(role) {
   return ["aluno", "instrutor", "admin"].includes(role) ? role : "aluno";
 }
 
+function dateInSaoPaulo(date = new Date()) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date).map(part => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function addMonthsToDate(dateKey, months) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const targetMonth = month - 1 + months;
+  const targetYear = year + Math.floor(targetMonth / 12);
+  const normalizedMonth = targetMonth % 12;
+  const lastDay = new Date(Date.UTC(targetYear, normalizedMonth + 1, 0)).getUTCDate();
+  const padded = value => String(value).padStart(2, "0");
+  return `${targetYear}-${padded(normalizedMonth + 1)}-${padded(Math.min(day, lastDay))}`;
+}
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(frontendDirectory));
@@ -391,10 +411,6 @@ app.get("/api/instructor/overview", requireAuth, requireInstructor, async (req, 
   }
 
   const now = new Date();
-  const periodStart = new Date(now);
-  periodStart.setDate(periodStart.getDate() - 30);
-  const periodEnd = new Date(now);
-  periodEnd.setDate(periodEnd.getDate() + 90);
 
   const dateParts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
@@ -403,14 +419,22 @@ app.get("/api/instructor/overview", requireAuth, requireInstructor, async (req, 
     day: "2-digit"
   }).formatToParts(now).map(part => [part.type, part.value]));
   const today = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
-  const [{ data: sessions, error: sessionsError }, { data: schedules, error: schedulesError }] = await Promise.all([
-    adminClient.from("class_sessions")
-      .select("id, starts_at, ends_at, capacity, location, status, class:classes(id, name, level, duration_minutes, modality:modalities(name))")
-      .eq("instructor_id", req.authUser.id)
-      .gte("starts_at", periodStart.toISOString())
-      .lte("starts_at", periodEnd.toISOString())
-      .order("starts_at", { ascending: true })
-      .limit(500),
+  const [sessionsResult, schedulesResult] = await Promise.all([
+    (async () => {
+      const allSessions = [];
+      const pageSize = 500;
+      for (let from = 0; ; from += pageSize) {
+        const { data: page, error } = await adminClient.from("class_sessions")
+          .select("id, starts_at, ends_at, capacity, location, status, class:classes(id, name, level, duration_minutes, modality:modalities(name))")
+          .eq("instructor_id", req.authUser.id)
+          .order("starts_at", { ascending: true })
+          .range(from, from + pageSize - 1);
+        if (error) return { data: null, error };
+        allSessions.push(...page);
+        if (page.length < pageSize) break;
+      }
+      return { data: allSessions, error: null };
+    })(),
     adminClient.from("class_schedules")
       .select("id, weekday, starts_at, effective_from, effective_until, class:classes(id, name, level, duration_minutes, capacity, location, modality:modalities(name))")
       .eq("instructor_id", req.authUser.id)
@@ -420,6 +444,8 @@ app.get("/api/instructor/overview", requireAuth, requireInstructor, async (req, 
       .order("weekday", { ascending: true })
       .order("starts_at", { ascending: true })
   ]);
+  const { data: sessions, error: sessionsError } = sessionsResult;
+  const { data: schedules, error: schedulesError } = schedulesResult;
   if (sessionsError || schedulesError) {
     console.error("Falha ao carregar agenda do instrutor:", sessionsError?.message || schedulesError?.message);
     return res.status(503).json({ error: "Não foi possível carregar as aulas do instrutor." });
@@ -435,15 +461,23 @@ app.get("/api/instructor/overview", requireAuth, requireInstructor, async (req, 
     });
   }
 
-  const [{ data: reservations, error: reservationsError }, { data: attendance, error: attendanceError }] = await Promise.all([
-    adminClient.from("reservations")
+  const sessionIdBatches = [];
+  for (let index = 0; index < sessionIds.length; index += 100) {
+    sessionIdBatches.push(sessionIds.slice(index, index + 100));
+  }
+  const [reservationResults, attendanceResults] = await Promise.all([
+    Promise.all(sessionIdBatches.map(ids => adminClient.from("reservations")
       .select("id, session_id, student_id, reserved_at")
-      .in("session_id", sessionIds)
-      .eq("status", "reservada"),
-    adminClient.from("attendance")
+      .in("session_id", ids)
+      .eq("status", "reservada"))),
+    Promise.all(sessionIdBatches.map(ids => adminClient.from("attendance")
       .select("id, session_id, student_id, status, marked_at")
-      .in("session_id", sessionIds)
+      .in("session_id", ids)))
   ]);
+  const reservationsError = reservationResults.find(result => result.error)?.error;
+  const attendanceError = attendanceResults.find(result => result.error)?.error;
+  const reservations = reservationResults.flatMap(result => result.data || []);
+  const attendance = attendanceResults.flatMap(result => result.data || []);
   if (reservationsError || attendanceError) {
     console.error("Falha ao carregar alunos e presenças do instrutor:", reservationsError?.message || attendanceError?.message);
     return res.status(503).json({ error: "Não foi possível carregar alunos e presenças." });
@@ -1411,7 +1445,7 @@ app.get("/api/admin/memberships/options", requireAuth, requireAdmin, async (_req
       .eq("active", true)
       .order("name"),
     adminClient.from("memberships")
-      .select("student_id, plan:membership_plans(name)")
+      .select("student_id, plan_id, plan:membership_plans(name)")
       .eq("status", "ativa"),
     adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 })
   ]);
@@ -1425,7 +1459,10 @@ app.get("/api/admin/memberships/options", requireAuth, requireAdmin, async (_req
   const emailById = new Map(users.users.map(user => [user.id, user.email || ""]));
   const activePlanByStudent = new Map(activeMemberships.map(membership => {
     const plan = Array.isArray(membership.plan) ? membership.plan[0] : membership.plan;
-    return [membership.student_id, plan?.name || "Plano ativo"];
+    return [membership.student_id, {
+      id: membership.plan_id,
+      name: plan?.name || "Plano ativo"
+    }];
   }));
 
   return res.json({
@@ -1433,7 +1470,7 @@ app.get("/api/admin/memberships/options", requireAuth, requireAdmin, async (_req
       id: student.id,
       fullName: student.full_name,
       email: emailById.get(student.id) || "",
-      activePlanName: activePlanByStudent.get(student.id) || null
+      activePlan: activePlanByStudent.get(student.id) || null
     })),
     plans
   });
@@ -1458,12 +1495,13 @@ app.get("/api/admin/memberships", requireAuth, requireAdmin, async (_req, res) =
   return res.json({ memberships: data });
 });
 
-// Atribui um plano ativo a um aluno; o preço vem do catálogo, nunca do navegador.
+// Atribui ou altera o plano ativo de um aluno; o preço vem do catálogo, nunca do navegador.
 app.post("/api/admin/memberships", requireAuth, requireAdmin, async (req, res) => {
-  const { studentId, planId } = req.body || {};
+  const { studentId, planId, durationMonths } = req.body || {};
   if (typeof studentId !== "string" || !studentId.trim() ||
-      typeof planId !== "string" || !planId.trim()) {
-    return res.status(400).json({ error: "Selecione um aluno e um plano." });
+      typeof planId !== "string" || !planId.trim() ||
+      !Number.isInteger(durationMonths) || durationMonths < 1 || durationMonths > 36) {
+    return res.status(400).json({ error: "Selecione um aluno, um plano e uma vigência entre 1 e 36 meses." });
   }
 
   const adminClient = createAdminClient();
@@ -1488,7 +1526,7 @@ app.post("/api/admin/memberships", requireAuth, requireAdmin, async (req, res) =
       .eq("active", true)
       .maybeSingle(),
     adminClient.from("memberships")
-      .select("id")
+      .select("id, plan_id")
       .eq("student_id", studentId)
       .eq("status", "ativa")
       .maybeSingle()
@@ -1501,15 +1539,45 @@ app.post("/api/admin/memberships", requireAuth, requireAdmin, async (req, res) =
   }
   if (!student) return res.status(404).json({ error: "Aluno ativo não encontrado." });
   if (!plan) return res.status(404).json({ error: "Plano ativo não encontrado." });
+  const startsOn = dateInSaoPaulo();
+  const endsOn = addMonthsToDate(startsOn, durationMonths);
+  if (existingMembership?.plan_id === plan.id) {
+    const { data, error } = await adminClient.from("memberships")
+      .update({
+        starts_on: startsOn,
+        ends_on: endsOn,
+        price_at_purchase: plan.price
+      })
+      .eq("id", existingMembership.id)
+      .eq("status", "ativa")
+      .select("id, student_id, plan_id, status, starts_on, ends_on, price_at_purchase")
+      .single();
+    if (error) {
+      console.error("Falha ao atualizar vigência do plano:", error.message);
+      return res.status(503).json({ error: "Não foi possível atualizar a vigência do plano." });
+    }
+    return res.json({ membership: data, message: "Vigência do plano atualizada com sucesso." });
+  }
+
+  const isChangingPlan = Boolean(existingMembership);
   if (existingMembership) {
-    return res.status(409).json({ error: "Este aluno já possui um plano ativo." });
+    const { error: cancelError } = await adminClient.from("memberships")
+      .update({ status: "cancelada", ends_on: startsOn })
+      .eq("id", existingMembership.id)
+      .eq("status", "ativa");
+    if (cancelError) {
+      console.error("Falha ao encerrar plano ativo antes da alteração:", cancelError.message);
+      return res.status(503).json({ error: "Não foi possível alterar o plano ativo do aluno." });
+    }
   }
 
   const { data, error } = await adminClient.from("memberships").insert({
     student_id: student.id,
     plan_id: plan.id,
     status: "ativa",
-    price_at_purchase: plan.price
+    price_at_purchase: plan.price,
+    starts_on: startsOn,
+    ends_on: endsOn
   }).select("id, student_id, plan_id, status, starts_on, ends_on, price_at_purchase").single();
 
   if (error) {
@@ -1519,7 +1587,12 @@ app.post("/api/admin/memberships", requireAuth, requireAdmin, async (req, res) =
     console.error("Falha ao atribuir plano ao aluno:", error.message);
     return res.status(503).json({ error: "Não foi possível atribuir este plano ao aluno." });
   }
-  return res.status(201).json({ membership: data, message: "Plano atribuído ao aluno com sucesso." });
+  return res.status(201).json({
+    membership: data,
+    message: isChangingPlan
+      ? "Plano do aluno alterado com sucesso."
+      : "Plano atribuído ao aluno com sucesso."
+  });
 });
 
 // Cria a ficha da aula; o horário é cadastrado separadamente.
@@ -1608,6 +1681,90 @@ app.post("/api/admin/sessions", requireAuth, requireAdmin, async (req, res) => {
     return res.status(503).json({ error: "Não foi possível agendar esta aula." });
   }
   return res.status(201).json({ session: data });
+});
+
+// Edita horário e instrutor da sessão sem alterar as reservas dos alunos.
+app.patch("/api/admin/sessions/:sessionId", requireAuth, requireAdmin, async (req, res) => {
+  const { startsAt, instructorId } = req.body || {};
+  const start = typeof startsAt === "string" ? new Date(startsAt) : null;
+  if (!start || Number.isNaN(start.getTime()) || start <= new Date() ||
+      (instructorId !== null && typeof instructorId !== "string")) {
+    return res.status(400).json({ error: "Informe uma data futura e um instrutor válido." });
+  }
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para editar aulas." });
+  }
+
+  if (instructorId) {
+    const { data: instructor, error } = await adminClient.from("profiles")
+      .select("id")
+      .eq("id", instructorId)
+      .eq("role", "instrutor")
+      .eq("status", "ativo")
+      .maybeSingle();
+    if (error || !instructor) {
+      if (error) console.error("Falha ao validar instrutor para edição da aula:", error.message);
+      return res.status(error ? 503 : 400).json({ error: "Selecione um instrutor ativo." });
+    }
+  }
+
+  const { data: current, error: currentError } = await adminClient.from("class_sessions")
+    .select("id, starts_at, status, class:classes(duration_minutes)")
+    .eq("id", req.params.sessionId)
+    .eq("status", "agendada")
+    .gt("starts_at", new Date().toISOString())
+    .maybeSingle();
+  if (currentError || !current) {
+    if (currentError) console.error("Falha ao carregar aula para edição:", currentError.message);
+    return res.status(currentError ? 503 : 404).json({ error: "Aula futura não encontrada ou não pode ser editada." });
+  }
+
+  const classRecord = Array.isArray(current.class) ? current.class[0] : current.class;
+  if (!classRecord?.duration_minutes) {
+    return res.status(503).json({ error: "Não foi possível determinar a duração cadastrada da aula." });
+  }
+  const end = new Date(start.getTime() + classRecord.duration_minutes * 60_000);
+  const { data, error } = await adminClient.from("class_sessions")
+    .update({
+      starts_at: start.toISOString(),
+      ends_at: end.toISOString(),
+      instructor_id: instructorId || null
+    })
+    .eq("id", req.params.sessionId)
+    .eq("status", "agendada")
+    .gt("starts_at", new Date().toISOString())
+    .select("id, starts_at, ends_at, instructor_id")
+    .maybeSingle();
+  if (error) {
+    console.error("Falha ao editar aula marcada:", error.message);
+    return res.status(503).json({ error: "Não foi possível editar esta aula." });
+  }
+  if (!data) return res.status(404).json({ error: "A aula deixou de estar disponível para edição." });
+  return res.json({ session: data, message: "Aula atualizada com sucesso." });
+});
+
+// Exclui logicamente uma sessão futura para preservar reservas e histórico.
+app.delete("/api/admin/sessions/:sessionId", requireAuth, requireAdmin, async (req, res) => {
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return res.status(503).json({ error: "Configure SUPABASE_SECRET_KEY no backend para excluir aulas." });
+  }
+
+  const { data, error } = await adminClient.from("class_sessions")
+    .update({ status: "cancelada" })
+    .eq("id", req.params.sessionId)
+    .eq("status", "agendada")
+    .gt("starts_at", new Date().toISOString())
+    .select("id")
+    .maybeSingle();
+  if (error) {
+    console.error("Falha ao excluir aula marcada:", error.message);
+    return res.status(503).json({ error: "Não foi possível excluir esta aula." });
+  }
+  if (!data) return res.status(404).json({ error: "Aula futura não encontrada ou já cancelada." });
+  return res.json({ message: "Aula excluída. As reservas e o histórico foram preservados." });
 });
 
 // Permite trocar o instrutor de um horário futuro sem mexer nas reservas dos alunos.

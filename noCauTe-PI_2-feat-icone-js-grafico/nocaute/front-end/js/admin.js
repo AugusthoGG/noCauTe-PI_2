@@ -17,7 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalitySelect = document.getElementById('class-modality');
     const membershipStudentSelect = document.getElementById('membership-student');
     const membershipPlanSelect = document.getElementById('membership-plan');
+    const membershipDurationInput = document.getElementById('membership-duration');
     const membershipSubmit = document.getElementById('membership-submit');
+    const editSessionDialog = document.getElementById('edit-session-dialog');
+    const editSessionForm = document.getElementById('edit-session-form');
+    const editSessionStart = document.getElementById('edit-session-start');
+    const editSessionInstructor = document.getElementById('edit-session-instructor');
+    let editingSessionId = null;
     const paymentForm = document.getElementById('payment-form');
     const paymentStudentSelect = document.getElementById('payment-student');
     const paymentPlanInput = document.getElementById('payment-plan');
@@ -28,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const paymentNotesInput = document.getElementById('payment-notes');
     const paymentsBody = document.getElementById('payments-body');
     let paymentOptions = [];
+    let membershipOptions = [];
     const views = [...document.querySelectorAll('.view-section')];
     let catalog = { modalities: [], classes: [], instructors: [] };
     // --- Controle de Navegação entre Seções ---
@@ -173,6 +180,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return select;
     }
 
+    function toLocalDateTimeInput(value) {
+        const date = new Date(value);
+        date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+        return date.toISOString().slice(0, 16);
+    }
+
     async function updateSessionInstructor(sessionId, select) {
         const previousValue = select.dataset.savedValue || '';
         select.disabled = true;
@@ -195,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderSessions(sessions) {
         sessionsBodies.forEach(sessionsBody => {
             if (!sessions.length) {
-                addEmptyRow(sessionsBody, 4, 'Nenhuma aula futura cadastrada. Agende a primeira na seção “Aulas e horários”.');
+                addEmptyRow(sessionsBody, 5, 'Nenhuma aula futura cadastrada. Agende a primeira na seção “Aulas e horários”.');
                 return;
             }
 
@@ -211,7 +224,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 select.dataset.savedValue = select.value;
                 select.addEventListener('change', () => updateSessionInstructor(session.id, select));
                 instructorCell.append(select);
-                row.append(instructorCell);
+                const actionCell = document.createElement('td');
+                const actions = document.createElement('details');
+                actions.className = 'session-actions';
+                const summary = document.createElement('summary');
+                summary.textContent = '...';
+                summary.setAttribute('aria-label', `Ações para ${className}`);
+                const menu = document.createElement('div');
+                menu.className = 'session-actions-menu';
+                [
+                    ['edit', 'Editar'],
+                    ['delete', 'Excluir']
+                ].forEach(([action, label]) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.dataset.action = action;
+                    button.textContent = label;
+                    button.addEventListener('click', async () => {
+                        actions.open = false;
+                        if (action === 'edit') {
+                            editingSessionId = session.id;
+                            editSessionStart.value = toLocalDateTimeInput(session.starts_at);
+                            editSessionInstructor.value = session.instructor?.id || '';
+                            editSessionDialog.showModal();
+                            return;
+                        }
+                        if (!window.confirm(`Excluir a aula "${className}"? As reservas serão preservadas e a aula ficará cancelada.`)) return;
+                        button.disabled = true;
+                        try {
+                            const result = await apiRequest(`/api/admin/sessions/${encodeURIComponent(session.id)}`, {
+                                method: 'DELETE'
+                            });
+                            showMessage(result.message);
+                            await loadDashboard();
+                        } catch (error) {
+                            showMessage(error.message, 'error');
+                        } finally {
+                            button.disabled = false;
+                        }
+                    });
+                    menu.append(button);
+                });
+                actions.append(summary, menu);
+                actionCell.append(actions);
+                row.append(instructorCell, actionCell);
                 return row;
             });
             sessionsBody.replaceChildren(...rows);
@@ -356,12 +412,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadMembershipOptions() {
         const { students, plans } = await apiRequest('/api/admin/memberships/options');
-        const studentsWithoutActivePlan = students.filter(student => !student.activePlanName);
+        membershipOptions = students;
         fillSelect(
             membershipStudentSelect,
-            studentsWithoutActivePlan,
-            studentsWithoutActivePlan.length ? 'Selecione um aluno' : 'Todos os alunos já têm plano ativo',
-            student => `${student.fullName || 'Aluno'}${student.email ? ` · ${student.email}` : ''}`
+            students,
+            students.length ? 'Selecione um aluno' : 'Nenhum aluno ativo cadastrado',
+            student => `${student.fullName || 'Aluno'}${student.email ? ` · ${student.email}` : ''}${student.activePlan ? ` — ${student.activePlan.name}` : ''}`
         );
         fillSelect(
             membershipPlanSelect,
@@ -369,7 +425,24 @@ document.addEventListener('DOMContentLoaded', () => {
             plans.length ? 'Selecione um plano' : 'Nenhum plano ativo cadastrado',
             plan => `${plan.name} — ${formatCurrency(plan.price)} / ${plan.billing_interval}`
         );
-        membershipSubmit.disabled = !studentsWithoutActivePlan.length || !plans.length;
+        updateMembershipSelection();
+    }
+
+    function updateMembershipSelection() {
+        const student = membershipOptions.find(item => item.id === membershipStudentSelect.value);
+        const help = document.getElementById('membership-help');
+
+        if (student?.activePlan) {
+            membershipPlanSelect.value = student.activePlan.id || '';
+            membershipSubmit.textContent = 'Alterar plano';
+            help.textContent = `Plano atual: ${student.activePlan.name}. Ao confirmar, o vínculo atual será encerrado e o novo plano será ativado a partir de hoje.`;
+        } else {
+            membershipPlanSelect.value = '';
+            membershipSubmit.textContent = 'Atribuir plano';
+            help.textContent = 'O plano será ativado a partir de hoje, com o preço cadastrado no Supabase.';
+        }
+
+        membershipSubmit.disabled = !membershipStudentSelect.value || !membershipPlanSelect.value;
     }
 
     function updatePaymentSelection() {
@@ -498,6 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fillSelect(modalitySelect, catalog.modalities, 'Selecione uma modalidade', modality => modality.name);
         fillSelect(classSelect, catalog.classes, 'Selecione uma aula', item => item.name);
         fillSelect(instructorSelect, catalog.instructors, 'Selecione um instrutor', item => item.full_name || 'Instrutor');
+        fillSelect(editSessionInstructor, catalog.instructors, 'Sem instrutor', item => item.full_name || 'Instrutor');
     }
 
     // Envia convite de instrutor e atualiza o painel sem recarregar a página.
@@ -524,6 +598,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    membershipStudentSelect.addEventListener('change', updateMembershipSelection);
+    membershipPlanSelect.addEventListener('change', () => {
+        membershipSubmit.disabled = !membershipStudentSelect.value || !membershipPlanSelect.value;
+    });
+
+    document.getElementById('cancel-edit-session').addEventListener('click', () => {
+        editSessionDialog.close();
+    });
+
+    editSessionForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const submit = editSessionForm.querySelector('button[type="submit"]');
+        submit.disabled = true;
+        try {
+            const result = await apiRequest(`/api/admin/sessions/${encodeURIComponent(editingSessionId)}`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    startsAt: new Date(editSessionStart.value).toISOString(),
+                    instructorId: editSessionInstructor.value || null
+                })
+            });
+            editSessionDialog.close();
+            showMessage(result.message);
+            await loadDashboard();
+        } catch (error) {
+            showMessage(error.message, 'error');
+        } finally {
+            submit.disabled = false;
+        }
+    });
+
     membershipForm.addEventListener('submit', async event => {
         event.preventDefault();
         membershipSubmit.disabled = true;
@@ -532,7 +637,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: JSON.stringify({
                     studentId: membershipStudentSelect.value,
-                    planId: membershipPlanSelect.value
+                    planId: membershipPlanSelect.value,
+                    durationMonths: Number(membershipDurationInput.value)
                 })
             });
             showMessage(result.message);
@@ -662,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .catch(error => {
             console.error('Falha ao carregar o painel administrativo.', error);
             showMessage(error.message, 'error');
-            sessionsBodies.forEach(body => addEmptyRow(body, 4, 'Não foi possível carregar as aulas.'));
+            sessionsBodies.forEach(body => addEmptyRow(body, 5, 'Não foi possível carregar as aulas.'));
             addEmptyRow(reservationsBody, 4, 'Não foi possível carregar as reservas.');
             addEmptyRow(instructorsBody, 5, 'Não foi possível carregar os instrutores.');
             addEmptyRow(studentsBody, 5, 'Não foi possível carregar os alunos.');

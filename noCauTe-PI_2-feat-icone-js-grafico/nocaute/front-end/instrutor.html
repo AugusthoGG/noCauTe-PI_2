@@ -36,7 +36,7 @@
             </button>
             <button class="nav-item" data-target="view-aulas">
                 <img src="img/svg/icon-aulas.png" alt="" class="icon-sidebar">
-                Aulas de hoje
+                Aulas
             </button>
             <button class="nav-item" data-target="view-turmas">
                 <img src="img/svg/icon-turmas.png" alt="" class="icon-sidebar">
@@ -135,13 +135,14 @@
             </div>
         </section>
 
-        <!-- VISÃO: AULAS DE HOJE -->
+        <!-- VISÃO: TODAS AS AULAS -->
         <section id="view-aulas" class="view-section">
             <header class="view-header">
                 <h1>Aulas</h1>
-                <p id="data-aulas"></p>
+                <p>Todas as aulas atribuídas, da mais próxima até a mais distante.</p>
             </header>
 
+            <div class="class-filters" id="filtros-aulas" aria-label="Filtrar aulas por dia da semana"></div>
             <div class="classes-list" id="lista-aulas"></div>
         </section>
 

@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let data;
     let selectedSessionId = null;
     let savingAttendance = false;
+    let selectedWeekday = null;
     const charts = [];
 
     function showToast(message, type = 'success') {
@@ -89,6 +90,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatDate(value, options = { weekday: 'short', day: '2-digit', month: '2-digit' }) {
         return new Intl.DateTimeFormat('pt-BR', options).format(new Date(value));
+    }
+
+    function getSaoPauloWeekday(value) {
+        const weekday = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Sao_Paulo',
+            weekday: 'short'
+        }).format(new Date(value));
+        return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(weekday);
     }
 
     function switchView(targetId) {
@@ -178,20 +187,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderClasses() {
         const list = document.getElementById('lista-aulas');
-        const dateLabel = document.getElementById('data-aulas');
-        dateLabel.textContent = new Intl.DateTimeFormat('pt-BR', {
-            weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
-        }).format(new Date());
+        const filters = document.getElementById('filtros-aulas');
+        const weekdays = [
+            ['Todas', null],
+            ['Seg', 1],
+            ['Ter', 2],
+            ['Qua', 3],
+            ['Qui', 4],
+            ['Sex', 5],
+            ['Sáb', 6],
+            ['Dom', 0]
+        ];
+
+        filters.replaceChildren();
+        weekdays.forEach(([label, weekday]) => {
+            const button = element(
+                'button',
+                `filter-btn${selectedWeekday === weekday ? ' active' : ''}`,
+                label
+            );
+            button.type = 'button';
+            button.setAttribute('aria-pressed', String(selectedWeekday === weekday));
+            button.addEventListener('click', () => {
+                selectedWeekday = weekday;
+                renderClasses();
+            });
+            filters.append(button);
+        });
+
         list.replaceChildren();
-        const upcoming = data.sessions.filter(session =>
-            session.status === 'agendada' &&
-            localDateKey(new Date(session.starts_at)) === localDateKey()
-        );
-        if (!upcoming.length) {
-            list.append(element('p', '', 'Nenhuma aula atribuída para hoje.'));
+        const sessions = data.sessions
+            .filter(session => session.status !== 'cancelada')
+            .filter(session =>
+                selectedWeekday === null ||
+                getSaoPauloWeekday(session.starts_at) === selectedWeekday
+            )
+            .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+
+        if (!sessions.length) {
+            list.append(element('p', '', 'Nenhuma aula encontrada para este dia da semana.'));
             return;
         }
-        upcoming.forEach(session => {
+        sessions.forEach(session => {
             const card = element('article', 'class-card');
             const time = element('div', 'class-time', formatTime(session.starts_at));
             time.append(element('span', '', `${session.class?.duration_minutes || 0} min`));
@@ -200,7 +237,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const details = element('p', 'class-details');
             details.textContent = `${formatDate(session.starts_at)} · ${session.location || 'Local não informado'} · ${session.roster.length}/${session.capacity || 0} vagas ocupadas`;
             info.append(details);
-            card.append(time, info, attendanceButton(session, 'Ver Chamada'));
+            card.append(time, info);
+            if (new Date(session.starts_at) <= new Date()) {
+                card.append(attendanceButton(session, 'Ver Chamada'));
+            }
             list.append(card);
         });
     }

@@ -166,6 +166,80 @@
     padding: 0.4rem 0.55rem;
 }
 
+.session-actions {
+    position: relative;
+    width: max-content;
+}
+
+.session-actions summary {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 1px solid #c9c9c9;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.25rem;
+    font-weight: 700;
+    list-style: none;
+}
+
+.session-actions summary::-webkit-details-marker {
+    display: none;
+}
+
+.session-actions-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 3;
+    display: grid;
+    min-width: 130px;
+    padding: 0.35rem;
+    background: #fff;
+    border: 1px solid #e2e3e3;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(36, 36, 36, 0.12);
+}
+
+.session-actions-menu button {
+    padding: 0.55rem 0.7rem;
+    border: 0;
+    background: transparent;
+    color: #242424;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.session-actions-menu button:hover,
+.session-actions-menu button:focus-visible {
+    background: #fff7d6;
+}
+
+.session-actions-menu [data-action="delete"] {
+    color: #b42318;
+}
+
+.admin-dialog {
+    width: min(460px, calc(100% - 2rem));
+    padding: 1.5rem;
+    border: 0;
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.admin-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.admin-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
 .payment-status-select {
     min-width: 130px;
     min-height: 38px;

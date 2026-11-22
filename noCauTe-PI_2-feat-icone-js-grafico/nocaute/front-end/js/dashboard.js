@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let reservations = [];
     let selectedDate = '';
     let selectedCategory = 'todos';
+    let expiryNoticeShown = false;
 
     function createElement(tag, className, text) {
         const element = document.createElement(tag);
@@ -105,6 +106,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatDatabaseDate(value) {
         return value ? value.split('-').reverse().join('/') : '—';
+    }
+
+    function saoPauloDateKey() {
+        const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Sao_Paulo',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).formatToParts(new Date()).map(part => [part.type, part.value]));
+        return `${parts.year}-${parts.month}-${parts.day}`;
     }
 
     function normalizeText(value) {
@@ -228,6 +239,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('membership-period').textContent = membership
             ? `Vigência: ${formatDatabaseDate(membership.starts_on)}${membership.ends_on ? ` até ${formatDatabaseDate(membership.ends_on)}` : ''}`
             : '';
+        if (membership?.ends_on && membership.ends_on < saoPauloDateKey() && !expiryNoticeShown) {
+            const noticeKey = `nocaute.expiredMembershipNotice.${membership.id}`;
+            let alreadyNotified = false;
+            try {
+                alreadyNotified = sessionStorage.getItem(noticeKey) === '1';
+                if (!alreadyNotified) sessionStorage.setItem(noticeKey, '1');
+            } catch (error) {
+                console.warn('Não foi possível registrar a exibição do aviso de vigência.', error);
+            }
+            expiryNoticeShown = true;
+            if (!alreadyNotified) {
+                window.alert('Entre em contato com a Administração para resolver pendências financeiras.');
+            }
+        }
 
         const attendance = overview.attendance;
         document.getElementById('student-attendance-rate').textContent = `${attendance.percentage}%`;

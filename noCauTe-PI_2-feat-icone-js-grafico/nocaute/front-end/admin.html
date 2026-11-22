@@ -117,11 +117,12 @@
                                 <th>DATA E HORA</th>
                                 <th>ALUNOS</th>
                                 <th>INSTRUTOR</th>
+                                <th>AÇÃO</th>
                             </tr>
                         </thead>
                         <tbody class="sessions-body">
                             <tr>
-                                <td colspan="4">Carregando dados...</td>
+                                <td colspan="5">Carregando dados...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -174,11 +175,12 @@
                                 <th>DATA E HORA</th>
                                 <th>ALUNOS</th>
                                 <th>INSTRUTOR</th>
+                                <th>AÇÃO</th>
                             </tr>
                         </thead>
                         <tbody class="sessions-body">
                             <tr>
-                                <td colspan="4">Carregando dados...</td>
+                                <td colspan="5">Carregando dados...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -229,11 +231,11 @@
             <header class="view-header">
                 <p>Gestão de alunos</p>
                 <h1>Alunos e planos</h1>
-                <p>Atribua um plano ativo a um aluno cadastrado.</p>
+                <p>Atribua ou altere o plano ativo de um aluno cadastrado.</p>
             </header>
 
             <form id="membership-form" class="admin-card admin-form invite-form">
-                <h2>Atribuir plano</h2>
+                <h2>Atribuir ou alterar plano</h2>
                 <label for="membership-student">Aluno</label>
                 <select id="membership-student" required>
                     <option value="">Carregando alunos...</option>
@@ -242,7 +244,9 @@
                 <select id="membership-plan" required>
                     <option value="">Carregando planos...</option>
                 </select>
-                <p class="admin-form-help">O plano será ativado a partir de hoje, com o preço cadastrado no Supabase.</p>
+                <label for="membership-duration">Vigência (meses)</label>
+                <input id="membership-duration" type="number" min="1" max="36" value="1" required>
+                <p id="membership-help" class="admin-form-help">O plano será ativado a partir de hoje, com o preço cadastrado no Supabase.</p>
                 <button id="membership-submit" class="btn btn-primary" type="submit">Atribuir plano</button>
             </form>
 
@@ -489,6 +493,21 @@
             </div>
         </section>
     </main>
+
+    <dialog id="edit-session-dialog" class="admin-dialog">
+        <form id="edit-session-form" class="admin-form">
+            <h2>Editar aula marcada</h2>
+            <label for="edit-session-start">Data e hora</label>
+            <input id="edit-session-start" type="datetime-local" required>
+            <label for="edit-session-instructor">Instrutor</label>
+            <select id="edit-session-instructor"></select>
+            <p class="admin-form-help">As reservas dos alunos serão mantidas no novo horário.</p>
+            <div class="admin-dialog-actions">
+                <button id="cancel-edit-session" class="btn btn-outline" type="button">Cancelar</button>
+                <button class="btn btn-primary" type="submit">Salvar alterações</button>
+            </div>
+        </form>
+    </dialog>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/auth-session.js"></script>
     <script src="js/admin.js"></script>
