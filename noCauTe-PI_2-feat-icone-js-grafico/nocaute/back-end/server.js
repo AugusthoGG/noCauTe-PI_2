@@ -733,7 +733,7 @@ app.post("/api/student/reservations", requireAuth, requireStudent, async (req, r
 
   if (error) {
     if (error.code === "23505") {
-      return res.status(409).json({ error: "Você já reservou esta aula." });
+      return res.status(409).json({ error: "Após cancelar a reserva, você não pode fazer uma nova." });
     }
     if (error.code === "23514") {
       return res.status(409).json({ error: error.message });
